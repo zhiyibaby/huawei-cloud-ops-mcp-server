@@ -1,0 +1,110 @@
+import inspect
+import asyncio
+import importlib
+import pkgutil
+from typing import List, Tuple, Callable
+from fastmcp import FastMCP
+
+from huawei_cloud_ops_mcp_server import tools
+
+
+def _collect_tools_from_class(tools_class) -> List[Tuple[int, Callable, str]]:
+    """从类中收集工具及其优先级"""
+    tools_list = []
+    class_module = getattr(tools_class, '__module__', None)
+    tool_metadatas = getattr(tools_class, 'tool_metadatas', {})
+    for attr_name in dir(tools_class):
+        # 跳过私有属性和元数据属性
+        if attr_name.startswith('_') or attr_name.endswith('_metadata'):
+            continue
+        attr = getattr(tools_class, attr_name)
+        attr_module = getattr(attr, '__module__', None)
+        if attr_module and attr_module != class_module:
+            continue
+        # 收集静态方法
+        if isinstance(
+            inspect.getattr_static(tools_class, attr_name, None), staticmethod
+        ):
+            if callable(attr):
+                metadata = tool_metadatas.get(attr_name)
+                priority = metadata.priority if metadata else 10
+                tools_list.append((priority, attr, attr_name))
+        elif callable(attr) and not isinstance(attr, type):
+            if inspect.isfunction(attr) or inspect.iscoroutinefunction(attr):
+                # 获取优先级，如果不存在则使用默认值 10（最低优先级）
+                metadata = tool_metadatas.get(attr_name)
+                priority = metadata.priority if metadata else 10
+                tools_list.append((priority, attr, attr_name))
+
+    return tools_list
+
+
+def _collect_tools_from_module(module) -> List[Tuple[int, Callable, str]]:
+    """从模块中收集工具及其优先级"""
+    tools_list = []
+    module_name = module.__name__
+
+    for attr_name in dir(module):
+        if attr_name.startswith('_'):
+            continue
+        attr = getattr(module, attr_name)
+        if inspect.isclass(attr):
+            if getattr(attr, '__module__', None) == module_name:
+                tools_list.extend(_collect_tools_from_class(attr))
+        # 如果是函数或协程函数，直接收集
+        elif (
+            callable(attr) and
+            (inspect.isfunction(attr) or inspect.iscoroutinefunction(attr))
+        ):
+            if getattr(attr, '__module__', None) == module_name:
+                # 模块级函数默认优先级为 10（最低优先级）
+                tools_list.append((10, attr, attr_name))
+
+    return tools_list
+
+
+def load_tools(mcp: FastMCP):
+    """自动加载tools包下所有模块中的工具到MCP服务器,按优先级排序后注册"""
+    tools_package = tools
+    all_tools = []  # 收集所有工具: [(priority, tool_func, name), ...]
+
+    for finder, name, ispkg in pkgutil.iter_modules(
+        tools_package.__path__, tools_package.__name__ + '.'
+    ):
+        # 跳过包和__init__.py
+        if ispkg or name.endswith('.__init__'):
+            continue
+        try:
+            module = importlib.import_module(name)
+            module_tools = _collect_tools_from_module(module)
+            all_tools.extend(module_tools)
+        except Exception as e:
+            print(f'警告: 无法加载模块 {name}: {e}')
+            continue
+
+    all_tools.sort(key=lambda x: x[0])
+
+    # 按优先级顺序注册工具
+    for priority, tool_func, tool_name in all_tools:
+        try:
+            mcp.tool(tool_func)
+        except Exception as e:
+            print(f'警告: 无法注册工具 {tool_name}: {e}')
+            continue
+
+
+def main(mcp: FastMCP, transport: str):
+    load_tools(mcp)
+    mcp.run(transport=transport)
+
+
+async def main_async(mcp: FastMCP, transport: str):
+    load_tools(mcp)
+    await mcp.run_async(transport=transport)
+
+
+if __name__ == '__main__':
+    mcp = FastMCP(
+        name='huawei-cloud-ops-mcp-server'
+    )
+    asyncio.run(main_async(mcp, 'http'))

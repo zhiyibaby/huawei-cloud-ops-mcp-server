@@ -1,0 +1,17 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "调试: huawei_cloud_ops_mcp_server",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "huawei_cloud_ops_mcp_server",
+            "console": "integratedTerminal",
+            "cwd": "E:/huawei-cloud-ops-mcp-server/src",
+            "env": {
+                "PYTHONPATH": "E:/huawei-cloud-ops-mcp-server/src"
+            },
+            "python": "E:/huawei-cloud-ops-mcp-server/.venv/Scripts/python.exe"
+        }
+    ]
+}
