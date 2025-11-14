@@ -55,6 +55,8 @@ pip install -e .
 ```env
 HUAWEI_CLOUD_ACCESS_KEY=your_access_key
 HUAWEI_CLOUD_SECRET_KEY=your_secret_key
+# MCP 传输方式，可选值：stdio（默认，用于 Docker/命令行运行）或 http（用于 HTTP 服务）
+MCP_TRANSPORT=stdio
 ```
 
 ## 使用方法
@@ -66,17 +68,29 @@ HUAWEI_CLOUD_SECRET_KEY=your_secret_key
 docker build -t huawei-cloud-ops-mcp-server .
 ```
 
-2. 运行容器，并通过 8000 端口进行 HTTP 传输（需要设置环境变量）：
-```bash
-docker run -d --rm \
-  -e HUAWEI_CLOUD_ACCESS_KEY=your_access_key \
-  -e HUAWEI_CLOUD_SECRET_KEY=your_secret_key \
-  -p 8000:8000 \
-  huawei-cloud-ops-mcp-server
-```
-如需前台输出日志，可移除 `-d` 参数。
+2. 运行容器（需要设置环境变量）：
+   
+   **使用 stdio 传输（推荐，用于 MCP 客户端）：**
+   ```bash
+   docker run -i --rm \
+     -e HUAWEI_CLOUD_ACCESS_KEY=your_access_key \
+     -e HUAWEI_CLOUD_SECRET_KEY=your_secret_key \
+     -e MCP_TRANSPORT=stdio \
+     huawei-cloud-ops-mcp-server
+   ```
+   
+   **使用 HTTP 传输（需要端口映射）：**
+   ```bash
+   docker run -d --rm \
+     -e HUAWEI_CLOUD_ACCESS_KEY=your_access_key \
+     -e HUAWEI_CLOUD_SECRET_KEY=your_secret_key \
+     -e MCP_TRANSPORT=http \
+     -p 8000:8000 \
+     huawei-cloud-ops-mcp-server
+   ```
+   如需前台输出日志，可移除 `-d` 参数。
 
-3. 在 MCP 客户端中配置（使用 Docker）：
+3. 在 MCP 客户端中配置（使用 Docker，stdio 传输）：
 ```json
 {
   "mcpServers": {
@@ -86,6 +100,7 @@ docker run -d --rm \
         "run", "-i", "--rm",
         "-e", "HUAWEI_CLOUD_ACCESS_KEY=${HUAWEI_CLOUD_ACCESS_KEY}",
         "-e", "HUAWEI_CLOUD_SECRET_KEY=${HUAWEI_CLOUD_SECRET_KEY}",
+        "-e", "MCP_TRANSPORT=stdio",
         "huawei-cloud-ops-mcp-server"
       ]
     }
