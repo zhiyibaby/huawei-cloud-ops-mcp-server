@@ -15,5 +15,5 @@ services = [
 for name in services:
     md_path = (apidocs_package.joinpath(f'{name}.md'))
     with md_path.open('r', encoding='utf-8') as f:
-        API_DOCS[name] = f.read()
+        API_DOCS[name.lower()] = f.read()
         SUPPORTED_SERVICES.append(name.lower())
