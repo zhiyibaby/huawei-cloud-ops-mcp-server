@@ -9,6 +9,7 @@ from huawei_cloud_ops_mcp_server.config import (
 )
 from huawei_cloud_ops_mcp_server.utils import http_request
 from huawei_cloud_ops_mcp_server.huaweicloud import signer
+from huawei_cloud_ops_mcp_server.logger import logger
 
 
 class HuaweiCloudClient:
@@ -19,13 +20,16 @@ class HuaweiCloudClient:
     ) -> dict:
         """生成华为云 API 签名"""
         try:
+            logger.debug(f'生成华为云 API 签名: {method} {endpoint}')
             sig = signer.Signer()
             sig.Key = HUAWEI_CLOUD_ACCESS_KEY
             sig.Secret = HUAWEI_CLOUD_SECRET_KEY
             r = signer.HttpRequest(method, endpoint, headers, body)
             sig.Sign(r)
+            logger.debug('签名生成成功')
             return r.headers
         except Exception as e:
+            logger.error(f'生成华为云 API 签名时发生错误: {str(e)}', exc_info=True)
             raise RuntimeError(f'生成华为云 API 签名时发生错误: {str(e)}')
 
     def _get_request_headers(self) -> Optional[Tuple[str, str, str]]:
@@ -71,11 +75,18 @@ class HuaweiCloudClient:
         params: Optional[Dict] = None
     ) -> Dict[str, Any]:
         """发送请求到华为云 API(使用华为云签名)"""
+        logger.info(f'发送华为云 API 请求: {method} {endpoint}')
+        if params:
+            logger.debug(f'请求参数: {params}')
+        if data:
+            logger.debug(f'请求数据: {data}')
+
         headers = {'Content-Type': 'application/json'}
 
         # 尝试从请求头获取认证信息
         auth_info = self._get_request_headers()
         if auth_info:
+            logger.debug('从 HTTP 请求头获取认证信息')
             host, x_sdk_date, authorization = auth_info
             headers.update({
                 'Host': host,
@@ -84,6 +95,7 @@ class HuaweiCloudClient:
             })
         else:
             # 使用签名生成 headers
+            logger.debug('使用 AK/SK 生成签名')
             endpoint_with_params = self._build_endpoint_with_params(
                 endpoint, params
             )
@@ -92,7 +104,7 @@ class HuaweiCloudClient:
                 method, endpoint_with_params, headers, body
             )
 
-        return http_request(
+        response = http_request(
             method=method,
             url=endpoint,
             data=data,
@@ -100,3 +112,6 @@ class HuaweiCloudClient:
             headers=headers,
             timeout=30
         )
+
+        logger.info(f'华为云 API 请求完成: {method} {endpoint}, 状态码: {response.get("status_code")}')
+        return response

@@ -3,6 +3,8 @@ import requests
 from typing import Optional, Dict, Any
 from dataclasses import dataclass
 
+from huawei_cloud_ops_mcp_server.logger import logger
+
 
 @dataclass
 class ToolMetadata:
@@ -30,17 +32,22 @@ def strict_error_handler(func):
 
     @functools.wraps(func)
     async def wrapper(*args, **kwargs):
+        func_name = func.__name__
         try:
+            logger.debug(f'执行工具函数: {func_name}')
             # 检查函数是否是协程函数
             if inspect.iscoroutinefunction(func):
-                return await func(*args, **kwargs)
+                result = await func(*args, **kwargs)
             else:
                 # 同步函数直接调用
-                return func(*args, **kwargs)
+                result = func(*args, **kwargs)
+            logger.debug(f'工具函数 {func_name} 执行成功')
+            return result
         except Exception as e:
             # 直接返回详细错误信息(含traceback)，不进行任何重试或降级
             err_text = f'工具执行失败: {str(e)}'
             tb = traceback.format_exc()
+            logger.error(f'工具函数 {func_name} 执行失败: {str(e)}', exc_info=True)
             return {
                 'content': [
                     {
@@ -73,12 +80,12 @@ def http_request(
     Args:
         method: HTTP 方法 (GET, POST, PUT, DELETE, PATCH 等)
         url: 请求的 URL
-        data: 请求体数据（字典格式，会被序列化为 JSON）
+        data: 请求体数据(字典格式，会被序列化为 JSON)
         params: URL 查询参数字典
         headers: 自定义请求头字典（可选）
         timeout: 请求超时时间（秒），默认 30
         json_data: 直接传递的 JSON 数据
-            （如果提供，将优先使用此参数而不是 data）
+            (如果提供，将优先使用此参数而不是 data)
 
     Returns:
         Dict[str, Any]: 包含 status_code 和 data 的字典
@@ -120,22 +127,41 @@ def http_request(
         body = json.dumps(data)
 
     # 发送请求
-    response = requests.request(
-        method=method.upper(),
-        url=url,
-        headers=request_headers,
-        params=params,
-        data=body,
-        timeout=timeout
-    )
+    logger.debug(f'发送 HTTP 请求: {method.upper()} {url}')
+    if params:
+        logger.debug(f'请求参数: {params}')
+    if body:
+        logger.debug(f'请求体: {body[:200]}...' if len(body) > 200 else f'请求体: {body}')
 
-    # 解析响应
     try:
-        result = response.json()
-    except json.JSONDecodeError:
-        result = {'text': response.text}
+        response = requests.request(
+            method=method.upper(),
+            url=url,
+            headers=request_headers,
+            params=params,
+            data=body,
+            timeout=timeout
+        )
 
-    return {
-        'status_code': response.status_code,
-        'data': result
-    }
+        logger.debug(f'HTTP 响应状态码: {response.status_code}')
+
+        # 解析响应
+        try:
+            result = response.json()
+        except json.JSONDecodeError:
+            result = {'text': response.text}
+            logger.debug('响应不是 JSON 格式，使用文本格式')
+
+        if response.status_code >= 400:
+            logger.warning(f'HTTP 请求返回错误状态码: {response.status_code}, 响应: {result}')
+
+        return {
+            'status_code': response.status_code,
+            'data': result
+        }
+    except requests.exceptions.Timeout:
+        logger.error(f'HTTP 请求超时: {method.upper()} {url} (超时时间: {timeout}s)')
+        raise
+    except requests.exceptions.RequestException as e:
+        logger.error(f'HTTP 请求异常: {method.upper()} {url}, 错误: {str(e)}')
+        raise

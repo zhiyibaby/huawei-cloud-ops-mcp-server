@@ -7,6 +7,7 @@ from fastmcp import FastMCP
 
 from huawei_cloud_ops_mcp_server import tools
 from huawei_cloud_ops_mcp_server.config import MCP_TRANSPORT, MCP_HOST
+from huawei_cloud_ops_mcp_server.logger import logger
 
 
 def _collect_tools_from_class(tools_class) -> List[Tuple[int, Callable, str]]:
@@ -79,8 +80,9 @@ def load_tools(mcp: FastMCP):
             module = importlib.import_module(name)
             module_tools = _collect_tools_from_module(module)
             all_tools.extend(module_tools)
+            logger.debug(f'成功加载模块 {name}，发现 {len(module_tools)} 个工具')
         except Exception as e:
-            print(f'警告: 无法加载模块 {name}: {e}')
+            logger.warning(f'无法加载模块 {name}: {e}', exc_info=True)
             continue
 
     all_tools.sort(key=lambda x: x[0])
@@ -89,17 +91,24 @@ def load_tools(mcp: FastMCP):
     for priority, tool_func, tool_name in all_tools:
         try:
             mcp.tool(tool_func)
+            logger.debug(f'成功注册工具 {tool_name} (优先级: {priority})')
         except Exception as e:
-            print(f'警告: 无法注册工具 {tool_name}: {e}')
+            logger.warning(f'无法注册工具 {tool_name}: {e}', exc_info=True)
             continue
+
+    logger.info(f'工具加载完成，共注册 {len(all_tools)} 个工具')
 
 
 def main(mcp: FastMCP, transport: str):
+    logger.info(f'启动 MCP 服务器，传输方式: {transport}')
     load_tools(mcp)
     mcp.run(transport=transport)
 
 
 async def main_async(mcp: FastMCP, transport: str, host: str = None):
+    logger.info(f'启动 MCP 服务器（异步模式），传输方式: {transport}')
+    if transport == 'http':
+        logger.info(f'HTTP 模式，监听地址: {host}')
     load_tools(mcp)
     if transport == 'http':
         await mcp.run_async(transport=transport, host=host)
@@ -108,6 +117,9 @@ async def main_async(mcp: FastMCP, transport: str, host: str = None):
 
 
 if __name__ == '__main__':
+    logger.info('=' * 60)
+    logger.info('华为云运维 MCP 服务器启动')
+    logger.info('=' * 60)
     mcp = FastMCP(
         name='huawei-cloud-ops-mcp-server'
     )

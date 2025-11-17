@@ -10,6 +10,7 @@
 - **API 文档集成**: 内置常用 API 文档，支持快速查询
 - **安全认证**: 使用华为云 AK/SK 认证，支持环境变量配置
 - **工具自动发现**: 自动加载和注册工具，支持优先级配置
+- **完善的日志系统**: 支持多级别日志记录，自动日志轮转，同时输出到控制台和文件
 
 ## 支持的服务
 
@@ -51,6 +52,9 @@
   # MCP 传输方式，可选值：stdio（默认，用于本地运行）或 http（用于 Docker HTTP 服务）
   # 本地运行无需设置，默认使用 stdio
   MCP_TRANSPORT=http
+  # 日志配置（可选）
+  # LOG_LEVEL=INFO  # 日志级别：DEBUG, INFO, WARNING, ERROR, CRITICAL，默认为 INFO
+  # LOG_FILE=logs/app.log  # 日志文件路径，默认为 logs/app.log
   ```
 
 ## 使用方法
@@ -103,6 +107,22 @@ python -m huawei_cloud_ops_mcp_server
 }
 ```
 
+## 日志配置
+
+项目内置了完善的日志系统，支持以下功能：
+
+- **多级别日志**: DEBUG, INFO, WARNING, ERROR, CRITICAL
+- **双重输出**: 同时输出到控制台和文件
+- **日志轮转**: 自动管理日志文件大小（默认 10MB），保留 5 个备份文件
+- **详细格式**: 文件日志包含时间戳、模块名、文件名、行号、函数名等详细信息
+
+日志文件默认保存在 `logs/app.log`，可通过环境变量 `LOG_FILE` 自定义路径。
+
+日志级别可通过环境变量 `LOG_LEVEL` 配置，例如：
+- `LOG_LEVEL=DEBUG` - 显示所有日志，包括调试信息
+- `LOG_LEVEL=INFO` - 显示信息、警告和错误（默认）
+- `LOG_LEVEL=WARNING` - 仅显示警告和错误
+
 ## 注意事项
 
 1. **HTTP 方法限制**: 当前仅支持 GET 请求，POST/PUT/DELETE 请求暂不支持
@@ -110,6 +130,7 @@ python -m huawei_cloud_ops_mcp_server
 3. **区域名称**: 使用完整的中文区域名称（如 `"华北-北京一"`），工具会进行模糊匹配
 4. **project_id 占位符**: `action` 中的 `{project_id}` 会自动替换为对应区域的项目ID
 5. **返回值格式**: API 返回的是 JSON 字符串，需要解析才能使用其中的数据
+6. **日志文件**: 日志文件会自动创建在 `logs/` 目录下，建议将 `logs/` 目录添加到 `.gitignore`
 
 ## 贡献
 

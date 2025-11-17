@@ -10,6 +10,7 @@ from huawei_cloud_ops_mcp_server.huaweicloud.utils import HuaweiCloudClient
 from huawei_cloud_ops_mcp_server.huaweicloud.static import (
     prompt_understanding_docs, api_operations_docs)
 from huawei_cloud_ops_mcp_server.huaweicloud.apidocs import API_DOCS
+from huawei_cloud_ops_mcp_server.logger import logger
 
 
 class HuaweiApiCloudTools:
@@ -47,6 +48,7 @@ class HuaweiApiCloudTools:
         Returns:
             str: 工具使用说明
         """
+        logger.debug('调用工具: prompt_understanding')
         return prompt_understanding_docs
 
     @staticmethod
@@ -89,26 +91,47 @@ class HuaweiApiCloudTools:
             )
         """
         try:
+            logger.info(
+                f'执行华为云 API 请求: service={service}, action={action}, '
+                f'method={method}, zone={zone}'
+            )
+
             # 只允许GET请求
             if method.upper() != 'GET':
+                logger.warning(f'不支持的请求方法: {method}')
                 raise ValueError(f'错误: 当前仅支持GET请求方式, 不支持 "{method}"。')
 
             client = HuaweiCloudClient()
             project_id, region, url = base_url(service, zone)
+            logger.debug(
+                f'解析区域信息: zone={zone}, '
+                f'project_id={project_id}, region={region}'
+            )
 
             if '{project_id}' in action:
                 action = action.format(project_id=project_id)
+                logger.debug(f'替换 project_id 占位符: {action}')
 
             endpoint = f'{url}/{action.lstrip("/")}'
+            logger.debug(f'构建的端点: {endpoint}')
+
             loop = asyncio.get_event_loop()
             response = await loop.run_in_executor(
                 None,
                 lambda: client.request(method.upper(), endpoint, data, params)
             )
+
+            logger.info(f'华为云 API 请求成功: service={service}, action={action}')
             return json.dumps(response, indent=2, ensure_ascii=False)
 
         except Exception as e:
-            raise ValueError(f'API 请求错误: {str(e)}')
+            logger.error(
+                f'华为云 API 请求失败: service={service}, action={action}, 错误: {str(e)}',
+                exc_info=True
+            )
+            raise ValueError(
+                f'API 请求错误: {str(e)}'
+            )
 
     @staticmethod
     @strict_error_handler
@@ -122,17 +145,21 @@ class HuaweiApiCloudTools:
         Returns:
             str: API 文档说明
         """
+        logger.debug(f'调用工具: get_huawei_api_docs, service={service}')
         docs = API_DOCS
         # 若未提供服务名，默认列出所有文档
         if not service or service.lower() == 'all':
+            logger.debug('返回所有服务的 API 文档')
             return '\n\n'.join(
                 f'=== {k.upper()} ===\n{v}'
                 for k, v in docs.items()
             ).strip()
         # 有指定服务时，返回该服务文档
         if service in docs:
+            logger.debug(f'返回服务 {service} 的 API 文档')
             return docs[service]
         else:
+            logger.warning(f'未知服务: {service}，可用服务: {", ".join(docs.keys())}')
             raise ValueError(f'未知服务: {service}。可用服务: {", ".join(docs.keys())}')
 
     @staticmethod
@@ -142,4 +169,5 @@ class HuaweiApiCloudTools:
         Returns:
             str: 常用操作示例
         """
+        logger.debug('调用工具: list_common_operations')
         return api_operations_docs
