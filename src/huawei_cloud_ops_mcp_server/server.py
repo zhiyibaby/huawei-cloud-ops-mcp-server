@@ -33,7 +33,7 @@ def _collect_tools_from_class(tools_class) -> List[Tuple[int, Callable, str]]:
                 tools_list.append((priority, attr, attr_name))
         elif callable(attr) and not isinstance(attr, type):
             if inspect.isfunction(attr) or inspect.iscoroutinefunction(attr):
-                # 获取优先级，如果不存在则使用默认值 10（最低优先级）
+                # 获取优先级,如果不存在则使用默认值 10(最低优先级)
                 metadata = tool_metadatas.get(attr_name)
                 priority = metadata.priority if metadata else 10
                 tools_list.append((priority, attr, attr_name))
@@ -53,13 +53,13 @@ def _collect_tools_from_module(module) -> List[Tuple[int, Callable, str]]:
         if inspect.isclass(attr):
             if getattr(attr, '__module__', None) == module_name:
                 tools_list.extend(_collect_tools_from_class(attr))
-        # 如果是函数或协程函数，直接收集
+        # 如果是函数或协程函数,直接收集
         elif (
             callable(attr) and
             (inspect.isfunction(attr) or inspect.iscoroutinefunction(attr))
         ):
             if getattr(attr, '__module__', None) == module_name:
-                # 模块级函数默认优先级为 10（最低优先级）
+                # 模块级函数默认优先级为 10(最低优先级)
                 tools_list.append((10, attr, attr_name))
 
     return tools_list
@@ -80,7 +80,7 @@ def load_tools(mcp: FastMCP):
             module = importlib.import_module(name)
             module_tools = _collect_tools_from_module(module)
             all_tools.extend(module_tools)
-            logger.debug(f'成功加载模块 {name}，发现 {len(module_tools)} 个工具')
+            logger.debug(f'成功加载模块 {name},发现 {len(module_tools)} 个工具')
         except Exception as e:
             logger.warning(f'无法加载模块 {name}: {e}', exc_info=True)
             continue
@@ -96,19 +96,19 @@ def load_tools(mcp: FastMCP):
             logger.warning(f'无法注册工具 {tool_name}: {e}', exc_info=True)
             continue
 
-    logger.info(f'工具加载完成，共注册 {len(all_tools)} 个工具')
+    logger.info(f'工具加载完成,共注册 {len(all_tools)} 个工具')
 
 
 def main(mcp: FastMCP, transport: str):
-    logger.info(f'启动 MCP 服务器，传输方式: {transport}')
+    logger.info(f'启动 MCP 服务器,传输方式: {transport}')
     load_tools(mcp)
     mcp.run(transport=transport)
 
 
 async def main_async(mcp: FastMCP, transport: str, host: str = None):
-    logger.info(f'启动 MCP 服务器（异步模式），传输方式: {transport}')
+    logger.info(f'启动 MCP 服务器(异步模式),传输方式: {transport}')
     if transport == 'http':
-        logger.info(f'HTTP 模式，监听地址: {host}')
+        logger.info(f'HTTP 模式,监听地址: {host}')
     load_tools(mcp)
     if transport == 'http':
         await mcp.run_async(transport=transport, host=host)

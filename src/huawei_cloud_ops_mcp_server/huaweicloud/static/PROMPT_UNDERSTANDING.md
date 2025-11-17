@@ -13,8 +13,8 @@
 #### 参数说明
 
 - **service** (str, 必需): 服务类型
-  - 支持的服务: `ecs`, `vpc`, `rds`, `evs`, `elb`, `ims`
-  - 示例: `"ecs"`, `"vpc"`, `"rds"`
+  - 支持的服务: `ecs`, `vpc`, `rds`, `evs`, `elb`, `ims`, `ces`
+  - 示例: `"ecs"`, `"vpc"`, `"rds"`, `"ces"`
 
 - **action** (str, 必需): API 动作/端点路径
   - 如果路径中包含 `{project_id}`，工具会根据 `zone` 参数自动替换为对应区域的项目ID
@@ -64,7 +64,7 @@
 
 - **service** (str, 可选): 服务名称
   - 默认值: `"all"`
-  - 可选值: `"ecs"`, `"vpc"`, `"rds"`, `"evs"`, `"elb"`, `"ims"`, `"all"`
+  - 可选值: `"ecs"`, `"vpc"`, `"rds"`, `"evs"`, `"elb"`, `"ims"`, `"ces"`, `"all"`
 
 #### 返回值
 
@@ -119,7 +119,7 @@ list_common_operations()
 
 在调用 `huawei_api_request` 前，应确保：
 
-- `service` 参数是支持的服务之一（`ecs`, `vpc`, `rds`, `evs`, `elb`, `ims`）
+- `service` 参数是支持的服务之一（`ecs`, `vpc`, `rds`, `evs`, `elb`, `ims`, `ces`）
 - `action` 参数格式正确，如果包含 `{project_id}` 占位符，工具会自动替换（无需手动提供）
 - `method` 参数与操作类型匹配（当前仅支持 GET 请求）
 - `zone` 参数是有效的区域名称（如果未提供，将使用默认值 `"华北-北京一"`）
@@ -192,6 +192,11 @@ list_common_operations()
 ### IMS (镜像服务)
 
 - 列表: `service="ims"`, `action="v2/images"`, `method="GET"`
+
+### CES (云监控服务)
+
+- 查询监控数据: `service="ces"`, `action="V1.0/{project_id}/metric-data"`, `method="GET"`
+- 注意: 需要提供 namespace, metric_name, from, to 等查询参数
 
 ## 注意事项
 

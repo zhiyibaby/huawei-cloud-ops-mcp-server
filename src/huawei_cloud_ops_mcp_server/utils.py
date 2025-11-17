@@ -17,7 +17,7 @@ class ToolMetadata:
 def strict_error_handler(func):
     """
     用于函数的严格错误处理装饰器.
-    所有异常都会被捕获，返回统一结构体，不进行重试、降级，便于前端或调用方识别和处理.
+    所有异常都会被捕获,返回统一结构体,不进行重试、降级,便于前端或调用方识别和处理.
 
     返回内容结构:
     {
@@ -44,7 +44,7 @@ def strict_error_handler(func):
             logger.debug(f'工具函数 {func_name} 执行成功')
             return result
         except Exception as e:
-            # 直接返回详细错误信息(含traceback)，不进行任何重试或降级
+            # 直接返回详细错误信息(含traceback),不进行任何重试或降级
             err_text = f'工具执行失败: {str(e)}'
             tb = traceback.format_exc()
             logger.error(f'工具函数 {func_name} 执行失败: {str(e)}', exc_info=True)
@@ -80,12 +80,12 @@ def http_request(
     Args:
         method: HTTP 方法 (GET, POST, PUT, DELETE, PATCH 等)
         url: 请求的 URL
-        data: 请求体数据(字典格式，会被序列化为 JSON)
+        data: 请求体数据(字典格式,会被序列化为 JSON)
         params: URL 查询参数字典
-        headers: 自定义请求头字典（可选）
-        timeout: 请求超时时间（秒），默认 30
+        headers: 自定义请求头字典(可选)
+        timeout: 请求超时时间(秒),默认 30
         json_data: 直接传递的 JSON 数据
-            (如果提供，将优先使用此参数而不是 data)
+            (如果提供,将优先使用此参数而不是 data)
 
     Returns:
         Dict[str, Any]: 包含 status_code 和 data 的字典
@@ -150,11 +150,12 @@ def http_request(
             result = response.json()
         except json.JSONDecodeError:
             result = {'text': response.text}
-            logger.debug('响应不是 JSON 格式，使用文本格式')
+            logger.debug('响应不是 JSON 格式,使用文本格式')
 
         if response.status_code >= 400:
-            logger.warning(f'HTTP 请求返回错误状态码: {response.status_code}, 响应: {result}')
-
+            logger.warning(
+                f'HTTP 请求返回错误状态码: {response.status_code}, 响应: {result}'
+            )
         return {
             'status_code': response.status_code,
             'data': result

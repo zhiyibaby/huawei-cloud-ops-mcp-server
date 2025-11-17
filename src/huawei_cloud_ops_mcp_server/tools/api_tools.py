@@ -15,6 +15,7 @@ from huawei_cloud_ops_mcp_server.logger import logger
 
 class HuaweiApiCloudTools:
     tool_metadatas = {
+        # TODO timeout和retryable功能未实现，仅仅做标记
         'prompt_understanding': ToolMetadata(
             priority=1,
             category='documentation',
@@ -64,7 +65,7 @@ class HuaweiApiCloudTools:
         """执行 API 请求
 
         Args:
-            service: 服务类型 (ecs, vpc, rds, evs, elb, ims)
+            service: 服务类型 (ecs, vpc, rds, evs, elb, ims, ces)
             action: API 动作/端点路径，如 'v1/{project_id}/cloudservers/detail'
             method: HTTP 方法，当前仅支持 GET
             data: 请求体数据 (用于 POST/PUT 请求)
@@ -126,7 +127,8 @@ class HuaweiApiCloudTools:
 
         except Exception as e:
             logger.error(
-                f'华为云 API 请求失败: service={service}, action={action}, 错误: {str(e)}',
+                f'华为云 API 请求失败: service={service}, action={action}, '
+                f'错误: {str(e)}',
                 exc_info=True
             )
             raise ValueError(
@@ -139,7 +141,7 @@ class HuaweiApiCloudTools:
         """获取华为云 API 文档说明
 
         Args:
-            service: 服务名称 (ecs, vpc, rds, evs, elb, ims)
+            service: 服务名称 (ecs, vpc, rds, evs, elb, ims, ces)
             如果未提供，则默认返回所有文档
 
         Returns:

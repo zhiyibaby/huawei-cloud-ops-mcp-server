@@ -5,7 +5,7 @@
 ## 功能特性
 
 - **MCP 协议支持**: 基于 FastMCP 框架，兼容 MCP 标准协议
-- **多服务支持**: 支持 ECS、VPC、RDS、EVS、ELB、OBS、EIP、DDS、CSS、DCS 等多个华为云服务
+- **多服务支持**: 支持 ECS、VPC、RDS、EVS、ELB、OBS、EIP、DDS、CSS、DCS、CES 等多个华为云服务
 - **多区域支持**: 支持华为云全球多个区域，自动处理 project_id 和 region 映射
 - **API 文档集成**: 内置常用 API 文档，支持快速查询
 - **安全认证**: 使用华为云 AK/SK 认证，支持环境变量配置
@@ -26,6 +26,7 @@
 | DDS | 文档数据库 | [DDS.md](src/huawei_cloud_ops_mcp_server/huaweicloud/apidocs/DDS.md) |
 | CSS | 云搜索服务 | [CSS.md](src/huawei_cloud_ops_mcp_server/huaweicloud/apidocs/CSS.md) |
 | DCS | 分布式缓存服务 | [DCS.md](src/huawei_cloud_ops_mcp_server/huaweicloud/apidocs/DCS.md) |
+| CES | 云监控服务 | [CES.md](src/huawei_cloud_ops_mcp_server/huaweicloud/apidocs/CES.md) |
 
 ## 安装
 

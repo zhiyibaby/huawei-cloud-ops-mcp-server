@@ -37,7 +37,7 @@ class HuaweiCloudClient:
 
         Returns:
             Optional[Tuple[str, str, str]]:(Host, X-Sdk-Date, Authorization)
-                如果获取失败或信息不完整，返回 None
+                如果获取失败或信息不完整,返回 None
         """
         try:
             request = get_http_request()
@@ -94,7 +94,6 @@ class HuaweiCloudClient:
                 'Authorization': authorization
             })
         else:
-            # 使用签名生成 headers
             logger.debug('使用 AK/SK 生成签名')
             endpoint_with_params = self._build_endpoint_with_params(
                 endpoint, params
@@ -113,5 +112,8 @@ class HuaweiCloudClient:
             timeout=30
         )
 
-        logger.info(f'华为云 API 请求完成: {method} {endpoint}, 状态码: {response.get("status_code")}')
+        logger.info(
+            f'华为云 API 请求完成: {method} {endpoint}, '
+            f'状态码: {response.get("status_code")}'
+        )
         return response

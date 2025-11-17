@@ -70,4 +70,20 @@ action: 'v2/{project_id}/instances'
 method: 'GET'
 ```
 
+11 查询监控数据 (CES):
+```
+service: 'ces'
+action: 'V1.0/{project_id}/metric-data'
+method: 'GET'
+params: {
+  'namespace': 'SYS.ECS',
+  'metric_name': 'cpu_util',
+  'dim.0': 'instance_id,12345678-1234-1234-1234-123456789012',
+  'from': 1442341200000,
+  'to': 1442344800000,
+  'period': 300,
+  'filter': 'average'
+}
+```
+
 使用 get_huawei_api_docs() 获取详细API文档。

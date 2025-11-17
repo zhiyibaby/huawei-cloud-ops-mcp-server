@@ -105,7 +105,7 @@ def base_url(service: str, zone: str) -> tuple[str, str, str]:
     获取华为云 API 基础 URL
 
     Args:
-        service: 服务类型（会自动转换为小写进行验证）
+        service: 服务类型(会自动转换为小写进行验证)
         zone: 区域名称
 
     Returns:

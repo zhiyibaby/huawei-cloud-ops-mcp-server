@@ -25,13 +25,13 @@ def setup_logger(
     Args:
         name: 日志记录器名称
         log_level: 日志级别 (DEBUG, INFO, WARNING, ERROR, CRITICAL)
-                  如果为 None,则从环境变量 LOG_LEVEL 读取，默认为 INFO
+                  如果为 None,则从环境变量 LOG_LEVEL 读取,默认为 INFO
         log_file: 日志文件路径
-                  如果为 None,则从环境变量 LOG_FILE 读取，默认为 logs/app.log
-        console_output: 是否输出到控制台，默认 True
-        file_output: 是否输出到文件，默认 True
-        max_bytes: 日志文件最大大小（字节），默认 10MB
-        backup_count: 保留的备份文件数量，默认 5
+                  如果为 None,则从环境变量 LOG_FILE 读取,默认为 logs/app.log
+        console_output: 是否输出到控制台,默认 True
+        file_output: 是否输出到文件,默认 True
+        max_bytes: 日志文件最大大小(字节),默认 10MB
+        backup_count: 保留的备份文件数量,默认 5
 
     Returns:
         logging.Logger: 配置好的日志记录器
