@@ -33,31 +33,25 @@
 - Python >= 3.11
 - 华为云账号及访问密钥 (AK/SK)
 
-### 安装步骤
+### 安装
 
-1. 克隆项目：
-```bash
-git clone <repository-url>
-cd huawei-cloud-ops-mcp-server
-```
+安装依赖：
+  ```bash
+  # 使用 uv (推荐)
+  uv sync
+  # 或使用 pip
+  pip install -e .
+  ```
 
-2. 安装依赖：
-```bash
-# 使用 uv (推荐)
-uv sync
-
-# 或使用 pip
-pip install -e .
-```
-
-3. 配置环境变量：
+配置环境变量：
 在项目根目录创建 `.env` 文件：
-```env
-HUAWEI_CLOUD_ACCESS_KEY=your_access_key
-HUAWEI_CLOUD_SECRET_KEY=your_secret_key
-# MCP 传输方式，可选值：stdio（默认，用于 Docker/命令行运行）或 http（用于 HTTP 服务）
-MCP_TRANSPORT=stdio
-```
+  ```env
+  HUAWEI_CLOUD_ACCESS_KEY=your_access_key
+  HUAWEI_CLOUD_SECRET_KEY=your_secret_key
+  # MCP 传输方式，可选值：stdio（默认，用于本地运行）或 http（用于 Docker HTTP 服务）
+  # 本地运行无需设置，默认使用 stdio
+  MCP_TRANSPORT=http
+  ```
 
 ## 使用方法
 
@@ -68,18 +62,7 @@ MCP_TRANSPORT=stdio
 docker build -t huawei-cloud-ops-mcp-server .
 ```
 
-2. 运行容器（需要设置环境变量）：
-   
-   **使用 stdio 传输（推荐，用于 MCP 客户端）：**
-   ```bash
-   docker run -i --rm \
-     -e HUAWEI_CLOUD_ACCESS_KEY=your_access_key \
-     -e HUAWEI_CLOUD_SECRET_KEY=your_secret_key \
-     -e MCP_TRANSPORT=stdio \
-     huawei-cloud-ops-mcp-server
-   ```
-   
-   **使用 HTTP 传输（需要端口映射）：**
+2. 运行容器（需要设置环境变量和端口映射）：
    ```bash
    docker run -d --rm \
      -e HUAWEI_CLOUD_ACCESS_KEY=your_access_key \
@@ -90,19 +73,12 @@ docker build -t huawei-cloud-ops-mcp-server .
    ```
    如需前台输出日志，可移除 `-d` 参数。
 
-3. 在 MCP 客户端中配置（使用 Docker，stdio 传输）：
+3. 在 MCP 客户端中配置（使用 HTTP 传输）：
 ```json
 {
   "mcpServers": {
     "huawei-cloud-ops": {
-      "command": "docker",
-      "args": [
-        "run", "-i", "--rm",
-        "-e", "HUAWEI_CLOUD_ACCESS_KEY=${HUAWEI_CLOUD_ACCESS_KEY}",
-        "-e", "HUAWEI_CLOUD_SECRET_KEY=${HUAWEI_CLOUD_SECRET_KEY}",
-        "-e", "MCP_TRANSPORT=stdio",
-        "huawei-cloud-ops-mcp-server"
-      ]
+      "url": "http://localhost:8000"
     }
   }
 }
@@ -110,12 +86,12 @@ docker build -t huawei-cloud-ops-mcp-server .
 
 ### 作为 MCP 服务器运行（本地）
 
-1. 启动服务器：
+1. 启动服务器（使用 stdio 传输，默认方式）：
 ```bash
 python -m huawei_cloud_ops_mcp_server
 ```
 
-2. 在 MCP 客户端中配置：
+2. 在 MCP 客户端中配置（使用 stdio 传输）：
 ```json
 {
   "mcpServers": {
@@ -125,32 +101,6 @@ python -m huawei_cloud_ops_mcp_server
     }
   }
 }
-```
-
-## 项目结构
-
-```
-huawei-cloud-ops-mcp-server/
-├── src/
-│   └── huawei_cloud_ops_mcp_server/
-│       ├── __init__.py
-│       ├── __main__.py          # 入口文件
-│       ├── config.py            # 配置管理
-│       ├── server.py            # MCP 服务器主逻辑
-│       ├── utils.py             # 工具函数
-│       ├── tools/               # 工具模块
-│       │   ├── __init__.py
-│       │   └── api_tools.py     # API 调用工具
-│       └── huaweicloud/         # 华为云相关
-│           ├── config.py        # 华为云配置
-│           ├── signer.py        # 签名工具
-│           ├── utils.py         # 工具函数
-│           ├── apidocs/         # API 文档
-│           └── static/         # 静态文档
-├── pyproject.toml               # 项目配置
-├── README.md                    # 本文档
-├── Dockerfile                   # Docker 镜像构建文件
-└── .env                         # 环境变量（需自行创建）
 ```
 
 ## 注意事项

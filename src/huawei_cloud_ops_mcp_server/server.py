@@ -6,7 +6,7 @@ from typing import List, Tuple, Callable
 from fastmcp import FastMCP
 
 from huawei_cloud_ops_mcp_server import tools
-from huawei_cloud_ops_mcp_server.config import MCP_TRANSPORT
+from huawei_cloud_ops_mcp_server.config import MCP_TRANSPORT, MCP_HOST
 
 
 def _collect_tools_from_class(tools_class) -> List[Tuple[int, Callable, str]]:
@@ -99,14 +99,16 @@ def main(mcp: FastMCP, transport: str):
     mcp.run(transport=transport)
 
 
-async def main_async(mcp: FastMCP, transport: str):
+async def main_async(mcp: FastMCP, transport: str, host: str = None):
     load_tools(mcp)
-    await mcp.run_async(transport=transport)
+    if transport == 'http':
+        await mcp.run_async(transport=transport, host=host)
+    else:
+        await mcp.run_async(transport=transport)
 
 
 if __name__ == '__main__':
     mcp = FastMCP(
         name='huawei-cloud-ops-mcp-server'
     )
-    # 从环境变量或 .env 文件读取传输方式，默认为 stdio
-    asyncio.run(main_async(mcp, MCP_TRANSPORT))
+    asyncio.run(main_async(mcp, MCP_TRANSPORT, host=MCP_HOST))

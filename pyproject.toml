@@ -8,3 +8,7 @@ dependencies = [
     "fastmcp>=2.13.0.2",
     "python-dotenv>=1.0.0",
 ]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
