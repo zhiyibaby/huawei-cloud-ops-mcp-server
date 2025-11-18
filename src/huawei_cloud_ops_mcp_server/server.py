@@ -68,7 +68,7 @@ def _collect_tools_from_module(module) -> List[Tuple[int, Callable, str]]:
 def load_tools(mcp: FastMCP):
     """自动加载tools包下所有模块中的工具到MCP服务器,按优先级排序后注册"""
     tools_package = tools
-    all_tools = []  # 收集所有工具: [(priority, tool_func, name), ...]
+    all_tools = []
 
     for finder, name, ispkg in pkgutil.iter_modules(
         tools_package.__path__, tools_package.__name__ + '.'

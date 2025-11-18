@@ -131,8 +131,9 @@ def http_request(
     if params:
         logger.debug(f'请求参数: {params}')
     if body:
-        logger.debug(f'请求体: {body[:200]}...' if len(body) > 200 else f'请求体: {body}')
-
+        logger.debug(
+            f'请求体: {body[:200]}...' if len(body) > 200 else f'请求体: {body}'
+        )
     try:
         response = requests.request(
             method=method.upper(),
