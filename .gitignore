@@ -13,3 +13,6 @@ wheels/
 # Logs
 logs/
 *.log
+*.db
+*.json
+test.py
