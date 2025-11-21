@@ -607,10 +607,16 @@ def click_cpu_arch_buttons(
 
 
 def find_and_click_buttons_in_sibling_divs(
-    page: Page, spec_label: any
+    page: Page, spec_label: any, spec1: Optional[str] = None
 ) -> List[Dict]:
     """通过id找到priceDetail_ecs_flavor_table容器，然后找到第三个div并
-    点击其中的button，返回规格和镜像数据"""
+    点击其中的button，返回规格和镜像数据
+    
+    Args:
+        page: Playwright页面对象
+        spec_label: 规格label元素
+        spec1: 第一个规格名称（类似"通用计算增强型"），从最开始点击的规格button获取
+    """
     print(
         "\n      [规格-第三个div] 开始查找"
         "priceDetail_ecs_flavor_table的第三个div..."
@@ -792,7 +798,8 @@ def find_and_click_buttons_in_sibling_divs(
                         )
                         if images_data:
                             specs_data.append({
-                                'spec': btn_text,
+                                'spec1': spec1 or '',
+                                'spec2': btn_text,
                                 'images': images_data
                             })
                     else:
@@ -844,7 +851,8 @@ def find_and_click_buttons_in_sibling_divs(
                             )
                             if images_data:
                                 specs_data.append({
-                                    'spec': btn_text,
+                                    'spec1': spec1 or '',
+                                    'spec2': btn_text,
                                     'images': images_data
                                 })
                         else:
@@ -891,7 +899,8 @@ def find_and_click_buttons_in_sibling_divs(
                             )
                             if images_data:
                                 specs_data.append({
-                                    'spec': btn_text,
+                                    'spec1': spec1 or '',
+                                    'spec2': btn_text,
                                     'images': images_data
                                 })
                     except Exception:
@@ -1525,14 +1534,15 @@ def click_spec_buttons(
             # 如果是ECS，在点击规格button后，查找并点击同级别div下的button
             if url_type == 'ecs':
                 spec_details = find_and_click_buttons_in_sibling_divs(
-                    page, spec_label
+                    page, spec_label, spec1=btn_text
                 )
                 if spec_details:
                     specs_data.extend(spec_details)
                 else:
                     # 如果没有详细信息，至少记录规格名称
                     specs_data.append({
-                        'spec': btn_text,
+                        'spec1': btn_text,
+                        'spec2': '',
                         'images': []
                     })
 
@@ -1679,7 +1689,8 @@ def write_to_tinydb(data: List[Dict], db_path: str) -> None:
 
                     specs = cpu_arch_data.get('specs', [])
                     for spec_data in specs:
-                        spec = spec_data.get('spec', '未知规格')
+                        spec1 = spec_data.get('spec1', '未知规格1')
+                        spec2 = spec_data.get('spec2', '未知规格2')
 
                         images = spec_data.get('images', [])
                         for image_data in images:
@@ -1703,7 +1714,8 @@ def write_to_tinydb(data: List[Dict], db_path: str) -> None:
                                 'region': region,
                                 'zone': zone,
                                 'cpu_arch': cpu_arch,
-                                'spec': spec,
+                                'spec1': spec1,
+                                'spec2': spec2,
                                 'image': image,
                                 'price_table': price_table_structure,
                                 'created_at': created_at
@@ -1720,7 +1732,7 @@ def write_to_tinydb(data: List[Dict], db_path: str) -> None:
                                 print(
                                     f"插入数据时出错: {e} | 区域: {region}, "
                                     f"可用区: {zone}, CPU架构: {cpu_arch}, "
-                                    f"规格: {spec}, 镜像: {image}"
+                                    f"规格1: {spec1}, 规格2: {spec2}, 镜像: {image}"
                                 )
                                 skipped_count += 1
                                 continue
@@ -1764,8 +1776,13 @@ def write_to_markdown(data: List[Dict], output_path: str) -> None:
 
                 specs = cpu_arch_data.get('specs', [])
                 for spec_data in specs:
-                    spec = spec_data.get('spec', '未知规格')
-                    md_content += f"##### {spec}\n\n"
+                    spec1 = spec_data.get('spec1', '未知规格1')
+                    spec2 = spec_data.get('spec2', '未知规格2')
+                    # 如果spec2存在，显示两个规格；否则只显示spec1
+                    if spec2:
+                        md_content += f"##### {spec1} - {spec2}\n\n"
+                    else:
+                        md_content += f"##### {spec1}\n\n"
 
                     images = spec_data.get('images', [])
                     for image_data in images:
