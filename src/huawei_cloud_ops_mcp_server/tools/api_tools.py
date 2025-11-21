@@ -7,8 +7,6 @@ from huawei_cloud_ops_mcp_server.utils import (
     ToolMetadata, strict_error_handler
 )
 from huawei_cloud_ops_mcp_server.huaweicloud.utils import HuaweiCloudClient
-from huawei_cloud_ops_mcp_server.huaweicloud.static import (
-    prompt_understanding_docs, api_operations_docs)
 from huawei_cloud_ops_mcp_server.huaweicloud.apidocs import API_DOCS
 from huawei_cloud_ops_mcp_server.logger import logger
 
@@ -16,12 +14,6 @@ from huawei_cloud_ops_mcp_server.logger import logger
 class HuaweiApiCloudTools:
     tool_metadatas = {
         # TODO timeout和retryable功能未实现，仅仅做标记
-        'prompt_understanding': ToolMetadata(
-            priority=1,
-            category='documentation',
-            timeout=10,
-            retryable=False
-        ),
         'huawei_api_request': ToolMetadata(
             priority=5,
             category='api_request',
@@ -33,24 +25,8 @@ class HuaweiApiCloudTools:
             category='documentation',
             timeout=10,
             retryable=False
-        ),
-        'list_common_operations': ToolMetadata(
-            priority=2,
-            category='documentation',
-            timeout=10,
-            retryable=False
-        ),
+        )
     }
-
-    @staticmethod
-    async def prompt_understanding() -> str:
-        """获取工具使用说明
-
-        Returns:
-            str: 工具使用说明
-        """
-        logger.debug('调用工具: prompt_understanding')
-        return prompt_understanding_docs
 
     @staticmethod
     @strict_error_handler
@@ -163,13 +139,3 @@ class HuaweiApiCloudTools:
         else:
             logger.warning(f'未知服务: {service}，可用服务: {", ".join(docs.keys())}')
             raise ValueError(f'未知服务: {service}。可用服务: {", ".join(docs.keys())}')
-
-    @staticmethod
-    async def list_common_operations() -> str:
-        """获取常用操作示例
-
-        Returns:
-            str: 常用操作示例
-        """
-        logger.debug('调用工具: list_common_operations')
-        return api_operations_docs
