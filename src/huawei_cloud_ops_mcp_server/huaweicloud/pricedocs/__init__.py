@@ -25,17 +25,15 @@ for json_path in json_files:
 
 # 导入 pricecomp 文件夹下的 md 文件
 pricecomp_dir = pricedocs_package / 'pricecomp'
-if pricecomp_dir.exists() and pricecomp_dir.is_dir():
-    md_files = [
-        path
-        for path in pricecomp_dir.iterdir()
-        if path.is_file() and path.suffix == '.md'
-    ]
+md_files = [
+    path
+    for path in pricecomp_dir.iterdir()
+    if path.is_file() and path.suffix == '.md'
+]
 
-    for md_path in md_files:
-        # 例如: ECS.md -> ECS
-        service_name = md_path.stem.lower()
-        try:
-            PRICE_DOCS[service_name] = md_path.read_text(encoding='utf-8')
-        except Exception as e:
-            logger.warning(f'无法读取价格文档文件 {md_path}: {e}')
+for md_path in md_files:
+    service_name = md_path.stem.lower()
+    try:
+        PRICE_DOCS[service_name] = md_path.read_text(encoding='utf-8')
+    except Exception as e:
+        logger.warning(f'无法读取价格文档文件 {md_path}: {e}')
