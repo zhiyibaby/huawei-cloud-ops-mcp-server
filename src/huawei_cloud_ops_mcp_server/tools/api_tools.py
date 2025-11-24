@@ -1,5 +1,4 @@
 import json
-import asyncio
 from typing import Optional, Dict
 
 from huawei_cloud_ops_mcp_server.huaweicloud.config import base_url
@@ -92,10 +91,8 @@ class HuaweiApiCloudTools:
             endpoint = f'{url}/{action.lstrip("/")}'
             logger.debug(f'构建的端点: {endpoint}')
 
-            loop = asyncio.get_event_loop()
-            response = await loop.run_in_executor(
-                None,
-                lambda: client.request(method.upper(), endpoint, data, params)
+            response = await client.request(
+                method.upper(), endpoint, data, params
             )
 
             logger.info(f'华为云 API 请求成功: service={service}, action={action}')

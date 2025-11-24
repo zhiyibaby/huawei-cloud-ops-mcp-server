@@ -82,6 +82,24 @@ class Config:
         return Config._get_mcp_host()
 
     @staticmethod
+    def get_mcp_port() -> int:
+        """获取 MCP 端口号"""
+        port_str = os.getenv('MCP_PORT', '8000')
+        try:
+            port = int(port_str)
+            if port < 1 or port > 65535:
+                _get_logger().warning(
+                    f'端口号 {port} 超出有效范围(1-65535),将使用默认值 8000'
+                )
+                return 8000
+            return port
+        except ValueError:
+            _get_logger().warning(
+                f'无效的端口号 {port_str},将使用默认值 8000'
+            )
+            return 8000
+
+    @staticmethod
     def get_log_level() -> str:
         """获取日志级别"""
         return Config._get_env('LOG_LEVEL', 'INFO')
@@ -109,6 +127,7 @@ def __getattr__(name: str) -> Any:
     config_map = {
         'MCP_TRANSPORT': Config.get_mcp_transport,
         'MCP_HOST': Config.get_mcp_host,
+        'MCP_PORT': Config.get_mcp_port,
         'LOG_LEVEL': Config.get_log_level,
         'LOG_FILE': Config.get_log_file,
         'HUAWEI_CLOUD_ACCESS_KEY': Config.get_huawei_cloud_access_key,

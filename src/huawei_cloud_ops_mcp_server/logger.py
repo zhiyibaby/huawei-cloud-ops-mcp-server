@@ -44,7 +44,8 @@ def setup_logger(
 
     # 获取日志文件路径
     if log_file is None:
-        log_file = os.getenv('LOG_FILE', str(_project_root / 'logs' / 'app.log'))
+        default_log_path = _project_root / 'logs' / 'app.log'
+        log_file = os.getenv('LOG_FILE', str(default_log_path))
 
     # 创建日志记录器
     logger = logging.getLogger(name)

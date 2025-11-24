@@ -67,7 +67,7 @@ class HuaweiCloudClient:
         separator = '&' if '?' in endpoint else '?'
         return f'{endpoint}{separator}{query_string}'
 
-    def request(
+    async def request(
         self,
         method: str,
         endpoint: str,
@@ -103,7 +103,7 @@ class HuaweiCloudClient:
                 method, endpoint_with_params, headers, body
             )
 
-        response = http_request(
+        response = await http_request(
             method=method,
             url=endpoint,
             data=data,

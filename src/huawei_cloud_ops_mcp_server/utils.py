@@ -1,5 +1,5 @@
 import json
-import requests
+import httpx
 from typing import Optional, Dict, Any
 from dataclasses import dataclass
 
@@ -65,7 +65,7 @@ def strict_error_handler(func):
     return wrapper
 
 
-def http_request(
+async def http_request(
     method: str,
     url: str,
     data: Optional[Dict] = None,
@@ -75,7 +75,7 @@ def http_request(
     json_data: Optional[Dict] = None
 ) -> Dict[str, Any]:
     """
-    通用的 HTTP 请求函数
+    通用的异步 HTTP 请求函数
 
     Args:
         method: HTTP 方法 (GET, POST, PUT, DELETE, PATCH 等)
@@ -96,18 +96,18 @@ def http_request(
 
     示例:
         # GET 请求
-        response = http_request(
+        response = await http_request(
             'GET', 'https://api.example.com/users', params={'page': 1}
         )
 
         # POST 请求
-        response = http_request(
+        response = await http_request(
             'POST', 'https://api.example.com/users',
             data={'name': 'John', 'age': 30}
         )
 
         # 带自定义请求头
-        response = http_request(
+        response = await http_request(
             'GET', 'https://api.example.com/data',
             headers={'Authorization': 'Bearer token'}
         )
@@ -119,51 +119,54 @@ def http_request(
     if headers:
         request_headers.update(headers)
 
-    # 处理请求体
-    body = None
+    # 处理请求体 - httpx 可以直接接受 json 参数
+    json_body = None
     if json_data is not None:
-        body = json.dumps(json_data)
+        json_body = json_data
     elif data is not None:
-        body = json.dumps(data)
+        json_body = data
 
     # 发送请求
     logger.debug(f'发送 HTTP 请求: {method.upper()} {url}')
     if params:
         logger.debug(f'请求参数: {params}')
-    if body:
-        logger.debug(
-            f'请求体: {body[:200]}...' if len(body) > 200 else f'请求体: {body}'
+    if json_body:
+        body_str = json.dumps(json_body)
+        body_preview = (
+            f'{body_str[:200]}...' if len(body_str) > 200 else body_str
         )
+        logger.debug(f'请求体: {body_preview}')
+
+    timeout_obj = httpx.Timeout(timeout, connect=timeout)
     try:
-        response = requests.request(
-            method=method.upper(),
-            url=url,
-            headers=request_headers,
-            params=params,
-            data=body,
-            timeout=timeout
-        )
-
-        logger.debug(f'HTTP 响应状态码: {response.status_code}')
-
-        # 解析响应
-        try:
-            result = response.json()
-        except json.JSONDecodeError:
-            result = {'text': response.text}
-            logger.debug('响应不是 JSON 格式,使用文本格式')
-
-        if response.status_code >= 400:
-            logger.warning(
-                f'HTTP 请求返回错误状态码: {response.status_code}, 响应: {result}'
+        async with httpx.AsyncClient(timeout=timeout_obj) as client:
+            response = await client.request(
+                method=method.upper(),
+                url=url,
+                headers=request_headers,
+                params=params,
+                json=json_body
             )
-        return {
-            'status_code': response.status_code,
-            'data': result
-        }
-    except requests.exceptions.Timeout:
+            logger.debug(f'HTTP 响应状态码: {response.status_code}')
+
+            # 解析响应
+            try:
+                result = response.json()
+            except json.JSONDecodeError:
+                result = {'text': response.text}
+                logger.debug('响应不是 JSON 格式,使用文本格式')
+
+            if response.status_code >= 400:
+                logger.warning(
+                    f'HTTP 请求返回错误状态码: {response.status_code}, 响应: {result}'
+                )
+            return {
+                'status_code': response.status_code,
+                'data': result
+            }
+    except httpx.TimeoutException:
         logger.error(f'HTTP 请求超时: {method.upper()} {url} (超时时间: {timeout}s)')
         raise
-    except requests.exceptions.RequestException as e:
+    except httpx.RequestError as e:
         logger.error(f'HTTP 请求异常: {method.upper()} {url}, 错误: {str(e)}')
         raise
