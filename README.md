@@ -66,9 +66,12 @@ docker run -d --rm \
   -e HUAWEI_CLOUD_ACCESS_KEY=your_access_key \
   -e HUAWEI_CLOUD_SECRET_KEY=your_secret_key \
   -e MCP_TRANSPORT=http \
+  -e MCP_HOST=0.0.0.0 \
   -p 8000:8000 \
   huawei-cloud-ops-mcp-server
 ```
+
+**注意**：`MCP_HOST` 和 `MCP_TRANSPORT` 在 Dockerfile 中已默认设置为 `0.0.0.0` 和 `http`，通常无需手动指定。如果遇到线程限制问题，可以使用 `--ulimit nproc=4096` 参数。
 
 3. MCP 客户端配置（HTTP 传输）：
 ```json
@@ -98,37 +101,6 @@ python -m huawei_cloud_ops_mcp_server
     }
   }
 }
-```
-
-## 使用示例
-
-### 价格查询
-```python
-# 查询 ECS 价格
-query_price(service='ecs', filters={'region': '华北-北京四'})
-
-# 多条件查询
-query_price(
-    service='ecs',
-    filters={'region': '华北-北京四', 'spec2': 'Ac9s'},
-    data_filters={'规格名称': 'large', '核数': '2核'}
-)
-```
-
-### API 调用
-```python
-# 查询 ECS 实例列表
-huawei_api_request(
-    service='ecs',
-    action='v1/{project_id}/cloudservers/detail',
-    zone='华北-北京一'
-)
-```
-
-### 工作流指导
-```python
-# 获取工具调用建议
-workflow_guide("查询ECS云服务器的价格")
 ```
 
 ## 注意事项

@@ -3,6 +3,7 @@
 """
 import os
 from pathlib import Path
+from typing import Optional, Callable, Any
 from dotenv import load_dotenv
 
 _project_root = Path(__file__).parent.parent.parent
@@ -12,10 +13,6 @@ load_dotenv(dotenv_path=_env_file)
 
 # 初始化日志(延迟导入避免循环依赖)
 _logger = None
-
-# 导出常用的配置变量,方便其他模块使用
-HUAWEI_CLOUD_ACCESS_KEY = os.getenv('HUAWEI_CLOUD_ACCESS_KEY')
-HUAWEI_CLOUD_SECRET_KEY = os.getenv('HUAWEI_CLOUD_SECRET_KEY')
 
 
 def _get_logger():
@@ -27,16 +24,96 @@ def _get_logger():
     return _logger
 
 
-# MCP 传输方式配置,支持 'stdio' 或 'http',默认为 'stdio'
-MCP_TRANSPORT = os.getenv('MCP_TRANSPORT', 'stdio').lower()
-MCP_HOST = os.getenv('MCP_HOST')
-MCP_HOST = MCP_HOST if MCP_HOST not in (None, '') else '127.0.0.1'
-if MCP_TRANSPORT not in ('stdio', 'http'):
-    _get_logger().warning(
-        f'不支持的传输方式 {MCP_TRANSPORT},将使用默认值 stdio'
-    )
-    MCP_TRANSPORT = 'stdio'
+class Config:
+    """动态配置管理器"""
 
-# 日志配置
-LOG_LEVEL = os.getenv('LOG_LEVEL', 'INFO')
-LOG_FILE = os.getenv('LOG_FILE', str(_project_root / 'logs' / 'app.log'))
+    @staticmethod
+    def _get_env(
+        key: str,
+        default: Any = None,
+        validator: Optional[Callable[[str], Any]] = None
+    ) -> Any:
+        """
+        动态获取环境变量
+
+        Args:
+            key: 环境变量键名
+            default: 默认值
+            validator: 可选的验证/转换函数
+
+        Returns:
+            配置值
+        """
+        value = os.getenv(key, default)
+        if validator:
+            value = validator(value)
+        return value
+
+    @staticmethod
+    def _validate_mcp_transport(value: str) -> str:
+        """验证 MCP 传输方式"""
+        transport = value.lower() if value else 'stdio'
+        if transport not in ('stdio', 'http'):
+            _get_logger().warning(
+                f'不支持的传输方式 {transport},将使用默认值 stdio'
+            )
+            transport = 'stdio'
+        return transport
+
+    @staticmethod
+    def _get_mcp_host() -> str:
+        """动态获取 MCP 主机地址"""
+        host = os.getenv('MCP_HOST')
+        if host in (None, '', 'host'):
+            transport = Config.get_mcp_transport()
+            host = '0.0.0.0' if transport == 'http' else '127.0.0.1'
+        return host
+
+    @staticmethod
+    def get_mcp_transport() -> str:
+        """获取 MCP 传输方式"""
+        return Config._get_env(
+            'MCP_TRANSPORT', 'stdio', Config._validate_mcp_transport
+        )
+
+    @staticmethod
+    def get_mcp_host() -> str:
+        """获取 MCP 主机地址"""
+        return Config._get_mcp_host()
+
+    @staticmethod
+    def get_log_level() -> str:
+        """获取日志级别"""
+        return Config._get_env('LOG_LEVEL', 'INFO')
+
+    @staticmethod
+    def get_log_file() -> str:
+        """获取日志文件路径"""
+        default_path = str(_project_root / 'logs' / 'app.log')
+        return Config._get_env('LOG_FILE', default_path)
+
+    @staticmethod
+    def get_huawei_cloud_access_key() -> Optional[str]:
+        """获取华为云访问密钥"""
+        return Config._get_env('HUAWEI_CLOUD_ACCESS_KEY')
+
+    @staticmethod
+    def get_huawei_cloud_secret_key() -> Optional[str]:
+        """获取华为云密钥"""
+        return Config._get_env('HUAWEI_CLOUD_SECRET_KEY')
+
+
+# 使用 __getattr__ 实现动态属性访问,保持向后兼容
+def __getattr__(name: str) -> Any:
+    """动态获取配置属性"""
+    config_map = {
+        'MCP_TRANSPORT': Config.get_mcp_transport,
+        'MCP_HOST': Config.get_mcp_host,
+        'LOG_LEVEL': Config.get_log_level,
+        'LOG_FILE': Config.get_log_file,
+        'HUAWEI_CLOUD_ACCESS_KEY': Config.get_huawei_cloud_access_key,
+        'HUAWEI_CLOUD_SECRET_KEY': Config.get_huawei_cloud_secret_key,
+    }
+    if name in config_map:
+        return config_map[name]()
+    raise AttributeError(f"module '{__name__}' has no attribute '{name}'")

@@ -33,6 +33,7 @@ env
 # Documentation
 *.md
 !README.md
+!**/README.md
 
 # Docker
 Dockerfile
