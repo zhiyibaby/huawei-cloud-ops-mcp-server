@@ -89,6 +89,7 @@ docker run -d --rm \
 1. 启动服务器：
 ```bash
 python -m huawei_cloud_ops_mcp_server
+linux: nohup uv run python -m huawei_cloud_ops_mcp_server > /dev/null 2>&1 </dev/null &
 ```
 
 2. MCP 客户端配置（stdio 传输）：
