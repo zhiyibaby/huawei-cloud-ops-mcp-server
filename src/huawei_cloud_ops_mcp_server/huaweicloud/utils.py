@@ -8,7 +8,7 @@ from huawei_cloud_ops_mcp_server.config import (
     HUAWEI_CLOUD_ACCESS_KEY, HUAWEI_CLOUD_SECRET_KEY
 )
 from huawei_cloud_ops_mcp_server.utils import http_request
-from huawei_cloud_ops_mcp_server.huaweicloud import signer
+from huawei_cloud_ops_mcp_server.huaweicloud.apig_sdk import signer
 from huawei_cloud_ops_mcp_server.logger import logger
 
 
@@ -81,7 +81,7 @@ class HuaweiCloudClient:
         if data:
             logger.debug(f'请求数据: {data}')
 
-        headers = {'Content-Type': 'application/json'}
+        headers = {}
 
         # 尝试从请求头获取认证信息
         auth_info = self._get_request_headers()
@@ -98,7 +98,7 @@ class HuaweiCloudClient:
             endpoint_with_params = self._build_endpoint_with_params(
                 endpoint, params
             )
-            body = json.dumps(data) if data else ''
+            body = json.dumps(data, separators=(',', ':')) if data else ''
             headers = self._sign_request(
                 method, endpoint_with_params, headers, body
             )
@@ -106,7 +106,7 @@ class HuaweiCloudClient:
         response = await http_request(
             method=method,
             url=endpoint,
-            data=data,
+            data=body,
             params=params,
             headers=headers,
             timeout=30

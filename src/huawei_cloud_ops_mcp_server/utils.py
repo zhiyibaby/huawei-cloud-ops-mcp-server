@@ -68,11 +68,10 @@ def strict_error_handler(func):
 async def http_request(
     method: str,
     url: str,
-    data: Optional[Dict] = None,
+    data: str = None,
     params: Optional[Dict] = None,
     headers: Optional[Dict] = None,
     timeout: int = 30,
-    json_data: Optional[Dict] = None
 ) -> Dict[str, Any]:
     """
     通用的异步 HTTP 请求函数
@@ -114,28 +113,19 @@ async def http_request(
     """
     # 设置默认请求头
     request_headers = {
-        'Content-Type': 'application/json',
+        'Content-Type': 'application/json;charset=UTF-8',
     }
     if headers:
         request_headers.update(headers)
-
-    # 处理请求体 - httpx 可以直接接受 json 参数
-    json_body = None
-    if json_data is not None:
-        json_body = json_data
-    elif data is not None:
-        json_body = data
 
     # 发送请求
     logger.debug(f'发送 HTTP 请求: {method.upper()} {url}')
     if params:
         logger.debug(f'请求参数: {params}')
-    if json_body:
-        body_str = json.dumps(json_body)
-        body_preview = (
-            f'{body_str[:200]}...' if len(body_str) > 200 else body_str
-        )
-        logger.debug(f'请求体: {body_preview}')
+    body_preview = (
+        f'{data[:200]}...' if len(data) > 200 else data
+    )
+    logger.debug(f'请求体: {body_preview}')
 
     timeout_obj = httpx.Timeout(timeout, connect=timeout)
     try:
@@ -145,7 +135,7 @@ async def http_request(
                 url=url,
                 headers=request_headers,
                 params=params,
-                json=json_body
+                content=data
             )
             logger.debug(f'HTTP 响应状态码: {response.status_code}')
 

@@ -117,7 +117,7 @@ class HuaweiPriceTools:
     @staticmethod
     @strict_error_handler
     async def query_price(
-        service: str,
+        service: str = 'ecs',
         filters: Optional[Dict[str, str]] = None,
         data_filters: Optional[Dict[str, str]] = None
     ) -> str:
@@ -133,7 +133,7 @@ class HuaweiPriceTools:
                 1. 按列名（表头）: {'规格名称': 'ac9s.large.2', '核数': '2核',
                    '内存': '4GiB'}
                 2. 按列索引: {'0': 'ac9s', '1': '2核'}
-                   (索引从0开始，对应headers的顺序)
+                   (索引从0开始,对应headers的顺序)
                 3. 混合使用: {'规格名称': 'ac9s', '1': '4GiB'}
                 例如: {'规格名称': 'large', '核数': '2核'} 会匹配所有规格名称
                 包含'large'且核数为'2核'的行

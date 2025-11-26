@@ -42,7 +42,7 @@ class HuaweiApiCloudTools:
         Args:
             service: 服务类型 (ecs, vpc, rds, evs, elb, ims, ces)
             action: API 动作/端点路径，如 'v1/{project_id}/cloudservers/detail'
-            method: HTTP 方法，当前仅支持 GET
+            method: HTTP 方法
             data: 请求体数据 (用于 POST/PUT 请求)
             params: 查询参数字典，用于 GET 请求的 URL 参数
                     例如: {'name': 'test', 'status': 'ACTIVE', 'limit': 50}
@@ -51,20 +51,6 @@ class HuaweiApiCloudTools:
 
         Returns:
             str: API 响应结果 (JSON 格式字符串)
-
-        示例:
-            # 查询所有 ECS 实例
-            huawei_api_request(
-                service='ecs',
-                action='v1/{project_id}/cloudservers/detail'
-            )
-
-            # 按名称和状态查询
-            huawei_api_request(
-                service='ecs',
-                action='v1/{project_id}/cloudservers/detail',
-                params={'name': 'test', 'status': 'ACTIVE', 'limit': 50}
-            )
         """
         try:
             logger.info(
@@ -74,8 +60,15 @@ class HuaweiApiCloudTools:
 
             # 只允许GET请求
             if method.upper() != 'GET':
-                logger.warning(f'不支持的请求方法: {method}')
-                raise ValueError(f'错误: 当前仅支持GET请求方式, 不支持 "{method}"。')
+                # TODO 允许特例：LTS 日志内容查询，后续删除
+                allow_post_lts_query = (
+                    method.upper() == 'POST' and
+                    service == 'lts' and
+                    action.endswith('/content/query')
+                )
+                if not allow_post_lts_query:
+                    logger.warning(f'不支持的请求方法: {method}')
+                    raise ValueError(f'错误: 当前仅支持GET请求方式, 不支持 \"{method}\"。')
 
             client = HuaweiCloudClient()
             project_id, region, url = base_url(service, zone)

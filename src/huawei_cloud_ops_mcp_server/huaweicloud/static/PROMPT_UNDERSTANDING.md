@@ -144,12 +144,12 @@ query_price(
   - 示例: `"v1/{project_id}/cloudservers/detail"`
   - 如果包含 `{project_id}`，工具会自动替换为对应区域的项目ID
 - `method` (str, 可选): HTTP 方法，默认 `"GET"`
-  - **注意：当前仅支持 GET 请求方式**
+  - **注意：当前仅支持 GET 请求方式 和 LTS查询日志信息POST请求**
 - `params` (Dict, 可选): 查询参数字典，用于 GET 请求的 URL 参数
   - 示例: `{"name": "test", "status": "ACTIVE", "limit": 50}`
   - 支持多个值: `{"tags": ["key1=value1", "key2=value2"]}`
 - `data` (Dict, 可选): 请求体数据，用于 POST/PUT 请求
-  - **注意：当前仅支持 GET，此参数暂不可用**
+  - **注意：当前仅支持 GET 和 LTS查询日志信息POST请求，LTS查询时参数可用**
 - `zone` (str, 可选): 区域名称，默认 `"华北-北京一"`
   - 工具会根据 `zone` 自动查找对应的 `project_id` 和 `region`
   - 支持的区域包括: `"华北-北京一"`, `"华北-北京四"`, `"华东-上海一"`, `"华东-上海二"`, `"华南-广州"` 等
