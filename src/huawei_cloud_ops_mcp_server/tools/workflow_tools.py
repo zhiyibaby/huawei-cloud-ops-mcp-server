@@ -55,47 +55,31 @@ class HuaweiWorkflowTools:
     ]
 
     @staticmethod
-    def _is_price_related(query: str) -> bool:
-        """判断查询是否与价格相关
-
-        优先匹配更长的组合词，避免误判。
-        例如："查询价格"应该被识别为价格查询，而不是API查询。
-        """
+    def _contains_keywords(query: str, keywords: list) -> bool:
         query_lower = query.lower()
-        # 按长度降序排列，优先匹配更长的组合词
-        sorted_keywords = sorted(
-            HuaweiWorkflowTools.PRICE_KEYWORDS,
-            key=len,
-            reverse=True
-        )
+        sorted_keywords = sorted(keywords, key=len, reverse=True)
         for keyword in sorted_keywords:
             if keyword.lower() in query_lower:
                 return True
         return False
 
     @staticmethod
+    def _is_price_related(query: str) -> bool:
+        """判断查询是否与价格相关"""
+        return HuaweiWorkflowTools._contains_keywords(
+            query,
+            HuaweiWorkflowTools.PRICE_KEYWORDS
+        )
+
+    @staticmethod
     def _is_api_related(query: str) -> bool:
-        """判断查询是否与API相关
-
-        如果查询已经包含价格相关关键词，则不判断为API相关，避免误判。
-        例如："查询价格"不应该被识别为API查询。
-        """
-        query_lower = query.lower()
-
-        # 如果查询包含价格相关关键词，则不判断为API相关
+        """判断查询是否与API相关"""
         if HuaweiWorkflowTools._is_price_related(query):
             return False
-
-        # 按长度降序排列，优先匹配更长的组合词
-        sorted_keywords = sorted(
-            HuaweiWorkflowTools.API_KEYWORDS,
-            key=len,
-            reverse=True
+        return HuaweiWorkflowTools._contains_keywords(
+            query,
+            HuaweiWorkflowTools.API_KEYWORDS
         )
-        for keyword in sorted_keywords:
-            if keyword.lower() in query_lower:
-                return True
-        return False
 
     @staticmethod
     async def workflow_guide(query: str) -> str:
@@ -132,26 +116,11 @@ class HuaweiWorkflowTools:
         """
         logger.info(f'工作流指导: 分析查询 "{query}"')
 
-        # 先查看理解文档（已加载到 prompt_understanding_docs）
-
-        # 从文档中提取关键信息
-        # 提取支持的服务列表
-        supported_services = ['ecs', 'vpc', 'rds', 'evs', 'elb', 'ims', 'ces']
-
         # 分析查询类型
         is_price = HuaweiWorkflowTools._is_price_related(query)
         is_api = HuaweiWorkflowTools._is_api_related(query)
 
-        service_name = None
-        query_lower = query.lower()
-        for service in supported_services:
-            if service in query_lower or service.upper() in query:
-                service_name = service
-                break
-
-        # 先查看理解文档（已加载到 prompt_understanding_docs）
         # 基于文档内容提供简化的指导建议
-
         guidance = []
         guidance.append('=' * 60)
         guidance.append('工作流指导')
@@ -161,46 +130,22 @@ class HuaweiWorkflowTools:
         if is_price and is_api:
             guidance.append('检测: 价格+API查询')
             guidance.append('')
-            if service_name:
-                msg1 = f'1. get_price_structure_doc(service="{service_name}")'
-                guidance.append(msg1)
-                msg2 = (f'2. query_price(service="{service_name}", '
-                        'filters={})')
-                guidance.append(msg2)
-                msg3 = f'3. get_huawei_api_docs(service="{service_name}")'
-                guidance.append(msg3)
-                msg4 = f'4. huawei_api_request(service="{service_name}", ...)'
-                guidance.append(msg4)
-            else:
-                guidance.append('1. get_price_structure_doc(service="服务名称")')
-                guidance.append('2. query_price(service="服务名称", filters={})')
-                guidance.append('3. get_huawei_api_docs(service="服务名称")')
-                guidance.append('4. huawei_api_request(service="服务名称", ...)')
+            guidance.append('1. get_price_structure_doc(service="服务名称")')
+            guidance.append('2. query_price(service="服务名称", filters={})')
+            guidance.append('3. get_huawei_api_docs(service="服务名称")')
+            guidance.append('4. huawei_api_request(service="服务名称", ...)')
 
         elif is_price:
             guidance.append('检测: 价格查询')
             guidance.append('')
-            if service_name:
-                msg1 = f'1. get_price_structure_doc(service="{service_name}")'
-                guidance.append(msg1)
-                msg2 = (f'2. query_price(service="{service_name}", '
-                        'filters={})')
-                guidance.append(msg2)
-            else:
-                guidance.append('1. get_price_structure_doc(service="服务名称")')
-                guidance.append('2. query_price(service="服务名称", filters={})')
+            guidance.append('1. get_price_structure_doc(service="服务名称")')
+            guidance.append('2. query_price(service="服务名称", filters={})')
 
         elif is_api:
             guidance.append('检测: API查询')
             guidance.append('')
-            if service_name:
-                msg1 = f'1. get_huawei_api_docs(service="{service_name}")'
-                guidance.append(msg1)
-                msg2 = f'2. huawei_api_request(service="{service_name}", ...)'
-                guidance.append(msg2)
-            else:
-                guidance.append('1. get_huawei_api_docs(service="服务名称")')
-                guidance.append('2. huawei_api_request(service="服务名称", ...)')
+            guidance.append('1. get_huawei_api_docs(service="服务名称")')
+            guidance.append('2. huawei_api_request(service="服务名称", ...)')
 
         else:
             guidance.append('检测: 无法判断类型')
@@ -213,8 +158,7 @@ class HuaweiWorkflowTools:
         guidance.append('=' * 60)
 
         doc = '\n'.join(guidance)
-        log_msg = (f'工作流指导完成: 查询类型 - 价格={is_price}, '
-                   f'API={is_api}, 服务={service_name}')
+        log_msg = (f'工作流指导完成: 查询类型 - 价格={is_price}, API={is_api}')
         logger.info(log_msg)
         return doc
 
