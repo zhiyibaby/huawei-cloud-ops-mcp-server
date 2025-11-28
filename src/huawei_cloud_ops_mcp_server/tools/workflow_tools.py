@@ -143,7 +143,6 @@ class HuaweiWorkflowTools:
         is_price = HuaweiWorkflowTools._is_price_related(query)
         is_api = HuaweiWorkflowTools._is_api_related(query)
 
-        # 尝试从查询中提取服务名称
         service_name = None
         query_lower = query.lower()
         for service in supported_services:
@@ -214,11 +213,11 @@ class HuaweiWorkflowTools:
         guidance.append('提示: 调用 prompt_understanding() 获取完整文档')
         guidance.append('=' * 60)
 
-        result = '\n'.join(guidance)
+        doc = '\n'.join(guidance)
         log_msg = (f'工作流指导完成: 查询类型 - 价格={is_price}, '
                    f'API={is_api}, 服务={service_name}')
         logger.info(log_msg)
-        return result
+        return doc
 
     @staticmethod
     async def prompt_understanding() -> str:

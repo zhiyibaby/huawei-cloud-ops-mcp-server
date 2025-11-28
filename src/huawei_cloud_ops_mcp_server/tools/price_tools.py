@@ -265,7 +265,8 @@ class HuaweiPriceTools:
                 f'价格查询成功: service={service}, '
                 f'找到 {len(raw_results)} 条记录'
             )
-            return json.dumps(response, indent=2, ensure_ascii=False)
+            price_json = json.dumps(response, indent=2, ensure_ascii=False)
+            return price_json
 
         except Exception as e:
             logger.error(

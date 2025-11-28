@@ -22,7 +22,18 @@ elif _env_loaded:
 
 
 _logger = None
-_config_cache: dict[str, Any] = {}
+
+
+class _LazyConfigCache(dict[str, Any]):
+    """使用 __missing__ 懒加载配置值"""
+
+    def __missing__(self, key: str) -> Any:
+        resolver = _CONFIG_RESOLVERS.get(key)
+        if resolver is None:
+            raise KeyError(key)
+        value = resolver()
+        self[key] = value
+        return value
 
 
 def _get_logger():
@@ -178,20 +189,25 @@ class Config:
         return HuaweiCloudConfig.get_secret_key()
 
 
+# 可复用的配置获取映射
+_CONFIG_RESOLVERS: dict[str, Callable[[], Any]] = {
+    'MCP_TRANSPORT': Config.get_mcp_transport,
+    'MCP_HOST': Config.get_mcp_host,
+    'MCP_PORT': Config.get_mcp_port,
+    'LOG_LEVEL': Config.get_log_level,
+    'LOG_FILE': Config.get_log_file,
+    'HUAWEI_CLOUD_ACCESS_KEY': Config.get_huawei_cloud_access_key,
+    'HUAWEI_CLOUD_SECRET_KEY': Config.get_huawei_cloud_secret_key,
+}
+_config_cache = _LazyConfigCache()
+
+
 # 使用 __getattr__ 实现动态属性访问,保持向后兼容
 def __getattr__(name: str) -> Any:
     """动态获取配置属性"""
-    config_map = {
-        'MCP_TRANSPORT': Config.get_mcp_transport,
-        'MCP_HOST': Config.get_mcp_host,
-        'MCP_PORT': Config.get_mcp_port,
-        'LOG_LEVEL': Config.get_log_level,
-        'LOG_FILE': Config.get_log_file,
-        'HUAWEI_CLOUD_ACCESS_KEY': Config.get_huawei_cloud_access_key,
-        'HUAWEI_CLOUD_SECRET_KEY': Config.get_huawei_cloud_secret_key,
-    }
-    if name in config_map:
-        if name not in _config_cache:
-            _config_cache[name] = config_map[name]()
+    try:
         return _config_cache[name]
-    raise AttributeError(f"module '{__name__}' has no attribute '{name}'")
+    except KeyError as exc:
+        raise AttributeError(
+            f"module '{__name__}' has no attribute '{name}'"
+        ) from exc

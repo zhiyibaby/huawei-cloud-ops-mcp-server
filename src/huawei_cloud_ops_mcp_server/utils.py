@@ -8,6 +8,7 @@ from huawei_cloud_ops_mcp_server.logger import logger
 
 @dataclass
 class ToolMetadata:
+    # TODO timeout和retryable功能未实现，仅仅做标记
     priority: int  # 1-10, 1为最高优先级
     category: str  # 工具分类
     timeout: int   # 超时时间
@@ -16,13 +17,17 @@ class ToolMetadata:
 
 def strict_error_handler(func):
     """
-    用于函数的严格错误处理装饰器.
-    所有异常都会被捕获,返回统一结构体,不进行重试、降级,便于前端或调用方识别和处理.
+    用于函数的严格错误处理装饰器。
+    捕获所有异常并返回统一结构体，不重试、不降级。
 
-    返回内容结构:
+    返回结构示例:
     {
-        "content": [{"type": "text", "text": str}],
-        "isError": True
+        "content": [
+            {"type": "text", "text": str},
+            {"type": "error_detail", "text": str}
+        ],
+        "isError": True,
+        "errorType": str
     }
     """
 
@@ -32,35 +37,26 @@ def strict_error_handler(func):
 
     @functools.wraps(func)
     async def wrapper(*args, **kwargs):
-        func_name = func.__name__
+        func_name = getattr(func, '__name__', repr(func))
         try:
             logger.debug(f'执行工具函数: {func_name}')
-            # 检查函数是否是协程函数
             if inspect.iscoroutinefunction(func):
                 result = await func(*args, **kwargs)
             else:
-                # 同步函数直接调用
                 result = func(*args, **kwargs)
             logger.debug(f'工具函数 {func_name} 执行成功')
             return result
         except Exception as e:
-            # 直接返回详细错误信息(含traceback),不进行任何重试或降级
-            err_text = f'工具执行失败: {str(e)}'
+            err_text = f'工具执行失败: {e}'
             tb = traceback.format_exc()
-            logger.error(f'工具函数 {func_name} 执行失败: {str(e)}', exc_info=True)
+            logger.error(f'工具函数 {func_name} 执行失败: {e}', exc_info=True)
             return {
                 'content': [
-                    {
-                        'type': 'text',
-                        'text': err_text
-                    },
-                    {
-                        'type': 'error_detail',
-                        'text': tb
-                    }
+                    {'type': 'text', 'text': err_text},
+                    {'type': 'error_detail', 'text': tb}
                 ],
                 'isError': True,
-                'errorType': str(e.__class__.__name__),
+                'errorType': e.__class__.__name__,
             }
     return wrapper
 

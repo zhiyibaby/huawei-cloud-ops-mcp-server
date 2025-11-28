@@ -6,12 +6,17 @@ from typing import List, Tuple, Callable
 from fastmcp import FastMCP
 
 from huawei_cloud_ops_mcp_server import tools
-from huawei_cloud_ops_mcp_server.config import MCP_TRANSPORT, MCP_HOST, MCP_PORT
+from huawei_cloud_ops_mcp_server.config import (
+    MCP_TRANSPORT, MCP_HOST, MCP_PORT
+)
 from huawei_cloud_ops_mcp_server.logger import logger
 
 
 def _collect_tools_from_class(tools_class) -> List[Tuple[int, Callable, str]]:
-    """从类中收集工具及其优先级"""
+    """
+    从类中收集工具及其优先级
+    返回: List[Tuple[priority, func, name]]
+    """
     tools_list = []
     class_module = getattr(tools_class, '__module__', None)
     tool_metadatas = getattr(tools_class, 'tool_metadatas', {})
@@ -105,7 +110,9 @@ def main(mcp: FastMCP, transport: str):
     mcp.run(transport=transport)
 
 
-async def main_async(mcp: FastMCP, transport: str, host: str = None, port: int = None):
+async def main_async(
+    mcp: FastMCP, transport: str, host: str = None, port: int = None
+):
     logger.info(f'启动 MCP 服务器(异步模式),传输方式: {transport}')
     if transport == 'http':
         logger.info(f'HTTP 模式,监听地址: {host}:{port}')

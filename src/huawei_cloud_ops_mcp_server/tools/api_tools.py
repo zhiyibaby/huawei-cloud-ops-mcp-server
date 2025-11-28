@@ -12,18 +12,17 @@ from huawei_cloud_ops_mcp_server.logger import logger
 
 class HuaweiApiCloudTools:
     tool_metadatas = {
-        # TODO timeout和retryable功能未实现，仅仅做标记
         'huawei_api_request': ToolMetadata(
             priority=5,
             category='api_request',
             timeout=30,
-            retryable=True
+            retryable=True,
         ),
         'get_huawei_api_docs': ToolMetadata(
             priority=3,
             category='documentation',
             timeout=10,
-            retryable=False
+            retryable=False,
         )
     }
 
@@ -89,7 +88,8 @@ class HuaweiApiCloudTools:
             )
 
             logger.info(f'华为云 API 请求成功: service={service}, action={action}')
-            return json.dumps(response, indent=2, ensure_ascii=False)
+            api_json = json.dumps(response, indent=2, ensure_ascii=False)
+            return api_json
 
         except Exception as e:
             logger.error(
