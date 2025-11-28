@@ -10,6 +10,7 @@
 |---------|--------|------|------|
 | `workflow_guide` | 0 | workflow | 工作流指导工具（最高优先级） |
 | `prompt_understanding` | 1 | documentation | 理解 |
+| `validate_account` | 2 | validation | 验证账号标识 |
 | `get_huawei_api_docs` | 3 | documentation | 获取 API 文档 |
 | `get_price_structure_doc` | 3 | price_documentation | 获取价格结构文档 |
 | `query_price` | 5 | price_query | 查询价格信息 |
@@ -43,7 +44,36 @@
 
 **返回值：** 字符串，完整的工具调用文档内容（即本文档）
 
-### 3. `get_huawei_api_docs` - 获取 API 文档
+### 3. `validate_account` - 验证账号标识
+
+**优先级：2**  
+**用途：** 验证用户输入中是否包含有效的账号标识
+
+**参数：**
+- `query` (str, 必需): 用户的输入文本或查询内容
+
+**返回值：** 字符串，账号验证结果信息
+- 如果找到账号：返回确认信息（如 "检测到账号: xiaohei2018"）
+- 如果未找到账号：返回提示信息，要求用户指定账号
+
+**支持的账号：**
+- `xiaohei2018`
+- `krsk2021`
+
+**使用建议：** 在执行需要账号的操作前，使用此工具验证用户是否已指定账号。
+
+**示例：**
+```python
+# 包含账号的查询
+validate_account("查询 xiaohei2018 的 ECS 实例")
+# 返回: "✓ 检测到账号: xiaohei2018"
+
+# 不包含账号的查询
+validate_account("查询 ECS 实例列表")
+# 返回: "✗ 未检测到账号标识\n请指定要使用的账号..."
+```
+
+### 4. `get_huawei_api_docs` - 获取 API 文档
 
 **优先级：3**  
 **用途：** 查询特定服务或所有服务的 API 文档说明
@@ -64,9 +94,9 @@ get_huawei_api_docs()
 get_huawei_api_docs(service="ecs")
 ```
 
-### 4. `get_price_structure_doc` - 获取价格结构文档
+### 5. `get_price_structure_doc` - 获取价格结构文档
 
-**优先级：4**  
+**优先级：3**  
 **用途：** 获取指定服务的价格结构说明文档
 
 **参数：**
@@ -85,7 +115,7 @@ get_price_structure_doc()
 get_price_structure_doc(service="ecs")
 ```
 
-### 5. `query_price` - 查询价格信息
+### 6. `query_price` - 查询价格信息
 
 **优先级：5**  
 **用途：** 查询华为云服务的价格信息
@@ -132,7 +162,7 @@ query_price(
 )
 ```
 
-### 6. `huawei_api_request` - 华为云 API 请求工具
+### 7. `huawei_api_request` - 华为云 API 请求工具
 
 **优先级：5**  
 **用途：** 执行华为云 API 调用
@@ -190,7 +220,8 @@ huawei_api_request(
 
 1. **不确定如何开始时**：先调用 `workflow_guide(query="用户需求描述")` 获取工作流建议
 2. **需要完整文档时**：调用 `get_workflow_docs()` 获取工具调用文档
-3. **根据工作流建议**：按照建议的工具调用顺序执行操作
+3. **账号验证**：如果操作需要指定账号，先调用 `validate_account(query="用户输入")` 验证账号
+4. **根据工作流建议**：按照建议的工具调用顺序执行操作
 
 ### API 查询操作流程
 
@@ -209,14 +240,15 @@ huawei_api_request(
 ## 关键注意事项
 
 1. **工具优先级**：工具按优先级排序，`workflow_guide` 具有最高优先级（0），建议在不确定时先使用
-2. **区域处理**：通过 `zone` 参数指定区域，工具会自动查找对应的 `project_id` 和 `region`，无需手动提供
-3. **占位符替换**：`action` 中的 `{project_id}` 会自动替换，无需手动处理
-4. **HTTP 方法限制**：`huawei_api_request` 当前仅支持 GET 请求方式，POST/PUT/DELETE 暂不支持
-5. **参数格式**：严格按照工具定义传递参数，参数名称和类型必须匹配
-6. **返回值格式**：所有工具返回字符串，JSON 格式的结果需要解析才能使用
-7. **错误处理**：工具调用失败会抛出 `ValueError`，包含错误信息
-8. **模糊匹配**：`query_price` 的 `filters` 和 `data_filters` 支持模糊匹配（子字符串匹配）
-9. **区域映射**：查询"北京一"区域的价格时，会自动映射到"北京四"
+2. **账号验证**：执行需要账号的操作前，使用 `validate_account` 验证用户是否指定了有效账号（支持：xiaohei2018、krsk2021）
+3. **区域处理**：通过 `zone` 参数指定区域，工具会自动查找对应的 `project_id` 和 `region`，无需手动提供
+4. **占位符替换**：`action` 中的 `{project_id}` 会自动替换，无需手动处理
+5. **HTTP 方法限制**：`huawei_api_request` 当前仅支持 GET 请求方式，POST/PUT/DELETE 暂不支持
+6. **参数格式**：严格按照工具定义传递参数，参数名称和类型必须匹配
+7. **返回值格式**：所有工具返回字符串，JSON 格式的结果需要解析才能使用
+8. **错误处理**：工具调用失败会抛出 `ValueError`，包含错误信息
+9. **模糊匹配**：`query_price` 的 `filters` 和 `data_filters` 支持模糊匹配（子字符串匹配）
+10. **区域映射**：查询"北京一"区域的价格时，会自动映射到"北京四"
 
 ## 常见服务端点参考
 
@@ -245,8 +277,9 @@ huawei_api_request(
 ## 最佳实践
 
 1. **先获取指导**：不确定如何操作时，先调用 `workflow_guide` 获取建议
-2. **先查文档**：调用 API 或查询价格前，先获取相关文档了解结构
-3. **逐步细化**：先进行简单查询，再根据结果添加过滤条件
-4. **错误处理**：捕获 `ValueError` 异常，根据错误信息调整参数
-5. **参数验证**：确保 `service` 参数是支持的服务之一
-6. **区域选择**：明确指定 `zone` 参数，避免使用默认值导致的问题
+2. **账号验证优先**：在执行需要账号的操作前，先使用 `validate_account` 验证账号
+3. **先查文档**：调用 API 或查询价格前，先获取相关文档了解结构
+4. **逐步细化**：先进行简单查询，再根据结果添加过滤条件
+5. **错误处理**：捕获 `ValueError` 异常，根据错误信息调整参数
+6. **参数验证**：确保 `service` 参数是支持的服务之一
+7. **区域选择**：明确指定 `zone` 参数，避免使用默认值导致的问题

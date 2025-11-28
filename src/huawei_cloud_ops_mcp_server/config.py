@@ -134,22 +134,54 @@ class HuaweiCloudConfig(BaseConfigGroup):
     """华为云相关配置"""
 
     @staticmethod
-    def get_access_key() -> Optional[str]:
-        """获取华为云访问密钥"""
-        value = HuaweiCloudConfig._get_env('HUAWEI_CLOUD_ACCESS_KEY')
+    def get_access_key(identifier: Optional[str] = None) -> Optional[str]:
+        """获取华为云访问密钥
+
+        Args:
+            identifier: 标识字符串(如 project_id)用于判断使用哪组密钥
+                       如果包含 'krsk2021'，使用 KRSK2021 密钥
+                       如果包含 'xiaohei2018',使用 XIAOHEI2018 密钥
+                       默认使用 XIAOHEI2018 密钥
+        """
+        key_name = 'XIAOHEI2018_CLOUD_ACCESS_KEY'
+
+        if identifier:
+            identifier_lower = identifier.lower()
+            if 'krsk2021' in identifier_lower:
+                key_name = 'KRSK2021_CLOUD_ACCESS_KEY'
+            elif 'xiaohei2018' in identifier_lower:
+                key_name = 'XIAOHEI2018_CLOUD_ACCESS_KEY'
+
+        value = HuaweiCloudConfig._get_env(key_name)
         if value is None:
             _get_logger().warning(
-                'HUAWEI_CLOUD_ACCESS_KEY 未设置，请检查环境变量或 .env 文件'
+                f'{key_name} 未设置，请检查环境变量或 .env 文件'
             )
         return value
 
     @staticmethod
-    def get_secret_key() -> Optional[str]:
-        """获取华为云密钥"""
-        value = HuaweiCloudConfig._get_env('HUAWEI_CLOUD_SECRET_KEY')
+    def get_secret_key(identifier: Optional[str] = None) -> Optional[str]:
+        """获取华为云密钥
+
+        Args:
+            identifier: 标识字符串,用于判断使用哪组密钥
+                       如果包含 'krsk2021'，使用 KRSK2021 密钥
+                       如果包含 'xiaohei2018'，使用 XIAOHEI2018 密钥
+                       默认使用 XIAOHEI2018 密钥
+        """
+        key_name = 'XIAOHEI2018_CLOUD_SECRET_KEY'
+
+        if identifier:
+            identifier_lower = identifier.lower()
+            if 'krsk2021' in identifier_lower:
+                key_name = 'KRSK2021_CLOUD_SECRET_KEY'
+            elif 'xiaohei2018' in identifier_lower:
+                key_name = 'XIAOHEI2018_CLOUD_SECRET_KEY'
+
+        value = HuaweiCloudConfig._get_env(key_name)
         if value is None:
             _get_logger().warning(
-                'HUAWEI_CLOUD_SECRET_KEY 未设置，请检查环境变量或 .env 文件'
+                f'{key_name} 未设置，请检查环境变量或 .env 文件'
             )
         return value
 
@@ -181,12 +213,16 @@ class Config:
         return LogConfig.get_file()
 
     @staticmethod
-    def get_huawei_cloud_access_key() -> Optional[str]:
-        return HuaweiCloudConfig.get_access_key()
+    def get_huawei_cloud_access_key(
+        identifier: Optional[str] = None
+    ) -> Optional[str]:
+        return HuaweiCloudConfig.get_access_key(identifier)
 
     @staticmethod
-    def get_huawei_cloud_secret_key() -> Optional[str]:
-        return HuaweiCloudConfig.get_secret_key()
+    def get_huawei_cloud_secret_key(
+        identifier: Optional[str] = None
+    ) -> Optional[str]:
+        return HuaweiCloudConfig.get_secret_key(identifier)
 
 
 # 可复用的配置获取映射
@@ -195,9 +231,7 @@ _CONFIG_RESOLVERS: dict[str, Callable[[], Any]] = {
     'MCP_HOST': Config.get_mcp_host,
     'MCP_PORT': Config.get_mcp_port,
     'LOG_LEVEL': Config.get_log_level,
-    'LOG_FILE': Config.get_log_file,
-    'HUAWEI_CLOUD_ACCESS_KEY': Config.get_huawei_cloud_access_key,
-    'HUAWEI_CLOUD_SECRET_KEY': Config.get_huawei_cloud_secret_key,
+    'LOG_FILE': Config.get_log_file
 }
 _config_cache = _LazyConfigCache()
 

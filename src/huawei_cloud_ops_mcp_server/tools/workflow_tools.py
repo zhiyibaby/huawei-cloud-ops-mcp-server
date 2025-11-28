@@ -13,7 +13,7 @@ class HuaweiWorkflowTools:
             timeout=10,
             retryable=False
         ),
-        'get_workflow_docs': ToolMetadata(
+        'prompt_understanding': ToolMetadata(
             priority=1,
             category='documentation',
             timeout=10,
@@ -101,9 +101,10 @@ class HuaweiWorkflowTools:
            a. 先查看价格文档 (get_price_structure_doc)
            b. 再调用价格工具 (query_price)
         4. 如果查询与API相关,建议按顺序:
-           a. 先查看文档 (get_huawei_api_docs)
-           b. 再调用API (huawei_api_request)
-        5. 如果同时涉及价格和API,优先处理价格查询
+           a. 先验证账号 (validate_account)
+           b. 再查看文档 (get_huawei_api_docs)
+           c. 最后调用API (huawei_api_request)
+        5. 如果同时涉及价格和API,先处理价格查询,再验证账号后调用API
 
         示例:
             # 价格查询
@@ -132,8 +133,9 @@ class HuaweiWorkflowTools:
             guidance.append('')
             guidance.append('1. get_price_structure_doc(service="服务名称")')
             guidance.append('2. query_price(service="服务名称", filters={})')
-            guidance.append('3. get_huawei_api_docs(service="服务名称")')
-            guidance.append('4. huawei_api_request(service="服务名称", ...)')
+            guidance.append('3. validate_account(query="用户输入")')
+            guidance.append('4. get_huawei_api_docs(service="服务名称")')
+            guidance.append('5. huawei_api_request(service="服务名称", ...)')
 
         elif is_price:
             guidance.append('检测: 价格查询')
@@ -144,14 +146,18 @@ class HuaweiWorkflowTools:
         elif is_api:
             guidance.append('检测: API查询')
             guidance.append('')
-            guidance.append('1. get_huawei_api_docs(service="服务名称")')
-            guidance.append('2. huawei_api_request(service="服务名称", ...)')
+            guidance.append('1. validate_account(query="用户输入")')
+            guidance.append('2. get_huawei_api_docs(service="服务名称")')
+            guidance.append('3. huawei_api_request(service="服务名称", ...)')
 
         else:
             guidance.append('检测: 无法判断类型')
             guidance.append('')
             guidance.append('价格查询: get_price_structure_doc → query_price')
-            guidance.append('API操作: get_huawei_api_docs → huawei_api_request')
+            guidance.append(
+                'API操作: validate_account → '
+                'get_huawei_api_docs → huawei_api_request'
+            )
 
         guidance.append('')
         guidance.append('提示: 调用 prompt_understanding() 获取完整文档')

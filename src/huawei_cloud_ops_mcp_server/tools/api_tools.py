@@ -29,6 +29,7 @@ class HuaweiApiCloudTools:
     @staticmethod
     @strict_error_handler
     async def huawei_api_request(
+        account: str,
         service: str,
         action: str,
         method: str = 'GET',
@@ -39,6 +40,7 @@ class HuaweiApiCloudTools:
         """执行 API 请求
 
         Args:
+            account: 账号名称(如xiaohei2018,krsk2021)
             service: 服务类型 (ecs, vpc, rds, evs, elb, ims, ces)
             action: API 动作/端点路径，如 'v1/{project_id}/cloudservers/detail'
             method: HTTP 方法
@@ -69,8 +71,8 @@ class HuaweiApiCloudTools:
                     logger.warning(f'不支持的请求方法: {method}')
                     raise ValueError(f'错误: 当前仅支持GET请求方式, 不支持 \"{method}\"。')
 
-            client = HuaweiCloudClient()
-            project_id, region, url = base_url(service, zone)
+            project_id, region, url = base_url(account, service, zone)
+            client = HuaweiCloudClient(identifier=account)
 
             if '{project_id}' in action:
                 action = action.format(project_id=project_id)

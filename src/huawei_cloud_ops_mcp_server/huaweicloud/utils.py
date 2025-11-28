@@ -4,9 +4,7 @@ from urllib.parse import urlencode
 from typing import Optional, Dict, Any, Tuple
 from fastmcp.server.dependencies import get_http_request
 
-from huawei_cloud_ops_mcp_server.config import (
-    HUAWEI_CLOUD_ACCESS_KEY, HUAWEI_CLOUD_SECRET_KEY
-)
+from huawei_cloud_ops_mcp_server.config import Config
 from huawei_cloud_ops_mcp_server.utils import http_request
 from huawei_cloud_ops_mcp_server.huaweicloud.apig_sdk import signer
 from huawei_cloud_ops_mcp_server.logger import logger
@@ -15,14 +13,22 @@ from huawei_cloud_ops_mcp_server.logger import logger
 class HuaweiCloudClient:
     """华为云统一 API 客户端"""
 
+    def __init__(self, identifier: Optional[str] = None):
+        """初始化华为云客户端
+
+        Args:
+            identifier: 标识字符串,用于判断使用哪组密钥
+        """
+        self.identifier = identifier
+
     def _sign_request(
         self, method: str, endpoint: str, headers: dict, body: str = ''
     ) -> dict:
         """生成华为云 API 签名"""
         try:
             sig = signer.Signer()
-            sig.Key = HUAWEI_CLOUD_ACCESS_KEY
-            sig.Secret = HUAWEI_CLOUD_SECRET_KEY
+            sig.Key = Config.get_huawei_cloud_access_key(self.identifier)
+            sig.Secret = Config.get_huawei_cloud_secret_key(self.identifier)
             r = signer.HttpRequest(method, endpoint, headers, body)
             sig.Sign(r)
             return r.headers
