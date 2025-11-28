@@ -36,7 +36,7 @@ class HuaweiCloudClient:
             logger.error(f'生成华为云 API 签名时发生错误: {str(e)}', exc_info=True)
             raise RuntimeError(f'生成华为云 API 签名时发生错误: {str(e)}')
 
-    def _get_request_headers(self) -> Optional[Tuple[str, str, str]]:
+    def _get_request_headers(self) -> Optional[Tuple[str, str, str, str]]:
         """从 HTTP 请求头获取认证信息
 
         Returns:
@@ -52,9 +52,10 @@ class HuaweiCloudClient:
             host = request_headers.get('Host')
             x_sdk_date = request_headers.get('X-Sdk-Date')
             authorization = request_headers.get('Authorization')
+            project_id = request_headers.get('X-Project-Id')
 
             if host and x_sdk_date and authorization:
-                return (host, x_sdk_date, authorization)
+                return (host, x_sdk_date, authorization, project_id)
         except Exception:
             pass
 
@@ -86,12 +87,18 @@ class HuaweiCloudClient:
         # 尝试从请求头获取认证信息
         auth_info = self._get_request_headers()
         if auth_info:
-            host, x_sdk_date, authorization = auth_info
+            host, x_sdk_date, authorization, project_id = auth_info
             headers.update({
                 'Host': host,
                 'X-Sdk-Date': x_sdk_date,
                 'Authorization': authorization
             })
+            import re
+            endpoint = re.sub(
+                r'/([a-zA-Z0-9\-_]+?)/([0-9a-f]{24,32}|[a-zA-Z0-9\-]{10,})/',
+                lambda m: f"/{m.group(1)}/{project_id}/",
+                endpoint,
+            )
         else:
             endpoint_with_params = self._build_endpoint_with_params(
                 endpoint, params

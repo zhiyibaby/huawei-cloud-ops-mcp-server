@@ -225,12 +225,7 @@ def base_url(account: str, service: str, zone: str) -> tuple[str, str, str]:
 
     # 同时获取项目的 region 和 project_id
     match = next(
-        (
-            v
-            for k, v in project_dict.items()
-            if zone in k
-        ),
-        None
+        (v for k, v in project_dict.items() if zone in k), None
     )
 
     if not match or 'project_id' not in match or 'region' not in match:
