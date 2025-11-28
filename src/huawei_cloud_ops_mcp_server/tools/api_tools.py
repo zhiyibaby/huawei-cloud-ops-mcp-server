@@ -71,17 +71,11 @@ class HuaweiApiCloudTools:
 
             client = HuaweiCloudClient()
             project_id, region, url = base_url(service, zone)
-            logger.debug(
-                f'解析区域信息: zone={zone}, '
-                f'project_id={project_id}, region={region}'
-            )
 
             if '{project_id}' in action:
                 action = action.format(project_id=project_id)
-                logger.debug(f'替换 project_id 占位符: {action}')
 
             endpoint = f'{url}/{action.lstrip("/")}'
-            logger.debug(f'构建的端点: {endpoint}')
 
             response = await client.request(
                 method.upper(), endpoint, data, params
@@ -113,18 +107,15 @@ class HuaweiApiCloudTools:
         Returns:
             str: API 文档说明
         """
-        logger.debug(f'调用工具: get_huawei_api_docs, service={service}')
         docs = API_DOCS
         # 若未提供服务名，默认列出所有文档
         if not service or service.lower() == 'all':
-            logger.debug('返回所有服务的 API 文档')
             return '\n\n'.join(
                 f'=== {k.upper()} ===\n{v}'
                 for k, v in docs.items()
             ).strip()
         # 有指定服务时，返回该服务文档
         if service in docs:
-            logger.debug(f'返回服务 {service} 的 API 文档')
             return docs[service]
         else:
             logger.warning(f'未知服务: {service}，可用服务: {", ".join(docs.keys())}')

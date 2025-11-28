@@ -39,12 +39,10 @@ def strict_error_handler(func):
     async def wrapper(*args, **kwargs):
         func_name = getattr(func, '__name__', repr(func))
         try:
-            logger.debug(f'执行工具函数: {func_name}')
             if inspect.iscoroutinefunction(func):
                 result = await func(*args, **kwargs)
             else:
                 result = func(*args, **kwargs)
-            logger.debug(f'工具函数 {func_name} 执行成功')
             return result
         except Exception as e:
             err_text = f'工具执行失败: {e}'
@@ -115,14 +113,6 @@ async def http_request(
         request_headers.update(headers)
 
     # 发送请求
-    logger.debug(f'发送 HTTP 请求: {method.upper()} {url}')
-    if params:
-        logger.debug(f'请求参数: {params}')
-    body_preview = (
-        f'{data[:200]}...' if len(data) > 200 else data
-    )
-    logger.debug(f'请求体: {body_preview}')
-
     timeout_obj = httpx.Timeout(timeout, connect=timeout)
     try:
         async with httpx.AsyncClient(timeout=timeout_obj) as client:
@@ -133,14 +123,12 @@ async def http_request(
                 params=params,
                 content=data
             )
-            logger.debug(f'HTTP 响应状态码: {response.status_code}')
 
             # 解析响应
             try:
                 result = response.json()
             except json.JSONDecodeError:
                 result = {'text': response.text}
-                logger.debug('响应不是 JSON 格式,使用文本格式')
 
             if response.status_code >= 400:
                 logger.warning(

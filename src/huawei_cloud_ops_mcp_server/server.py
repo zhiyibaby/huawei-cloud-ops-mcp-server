@@ -79,7 +79,6 @@ def load_tools(mcp: FastMCP):
             module = importlib.import_module(name)
             module_tools = _collect_tools_from_module(module)
             all_tools.extend(module_tools)
-            logger.debug(f'成功加载模块 {name},发现 {len(module_tools)} 个工具')
         except Exception as e:
             logger.warning(f'无法加载模块 {name}: {e}', exc_info=True)
             continue
@@ -90,7 +89,6 @@ def load_tools(mcp: FastMCP):
     for priority, tool_func, tool_name in all_tools:
         try:
             mcp.tool(tool_func)
-            logger.debug(f'成功注册工具 {tool_name} (优先级: {priority})')
         except Exception as e:
             logger.warning(f'无法注册工具 {tool_name}: {e}', exc_info=True)
             continue

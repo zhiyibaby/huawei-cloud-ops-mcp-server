@@ -133,7 +133,6 @@ class HuaweiWorkflowTools:
         logger.info(f'工作流指导: 分析查询 "{query}"')
 
         # 先查看理解文档（已加载到 prompt_understanding_docs）
-        logger.debug('基于工具理解文档提供指导...')
 
         # 从文档中提取关键信息
         # 提取支持的服务列表
@@ -228,5 +227,4 @@ class HuaweiWorkflowTools:
         Returns:
             str: 工具调用理解文档内容
         """
-        logger.debug('调用工具: prompt_understanding')
         return prompt_understanding_docs
