@@ -12,37 +12,33 @@ from huawei_cloud_ops_mcp_server.config import (
 from huawei_cloud_ops_mcp_server.logger import logger
 
 
-def _collect_tools_from_class(tools_class) -> List[Tuple[int, Callable, str]]:
+def _collect_tools_from_class(cls) -> List[Tuple[int, Callable, str]]:
     """
     从类中收集工具及其优先级
     返回: List[Tuple[priority, func, name]]
     """
     tools_list = []
-    class_module = getattr(tools_class, '__module__', None)
-    tool_metadatas = getattr(tools_class, 'tool_metadatas', {})
-    for attr_name in dir(tools_class):
-        # 跳过私有属性和元数据属性
+    class_module = getattr(cls, '__module__', None)
+    tool_metadatas = getattr(cls, 'tool_metadatas', {})
+    for attr_name in dir(cls):
         if attr_name.startswith('_') or attr_name.endswith('_metadata'):
             continue
-        attr = getattr(tools_class, attr_name)
-        attr_module = getattr(attr, '__module__', None)
-        if attr_module and attr_module != class_module:
+        attr = getattr(cls, attr_name)
+        # 只收集当前类本模块的方法
+        if getattr(attr, '__module__', None) != class_module:
             continue
-        # 收集静态方法
-        if isinstance(
-            inspect.getattr_static(tools_class, attr_name, None), staticmethod
-        ):
-            if callable(attr):
-                metadata = tool_metadatas.get(attr_name)
-                priority = metadata.priority if metadata else 10
-                tools_list.append((priority, attr, attr_name))
+        # 静态方法、类方法、普通方法
+        staticattr = inspect.getattr_static(cls, attr_name, None)
+        if isinstance(staticattr, (staticmethod, classmethod)):
+            func = attr
         elif callable(attr) and not isinstance(attr, type):
-            if inspect.isfunction(attr) or inspect.iscoroutinefunction(attr):
-                # 获取优先级,如果不存在则使用默认值 10(最低优先级)
-                metadata = tool_metadatas.get(attr_name)
-                priority = metadata.priority if metadata else 10
-                tools_list.append((priority, attr, attr_name))
-
+            func = attr
+        else:
+            continue
+        if callable(func):
+            metadata = tool_metadatas.get(attr_name)
+            priority = getattr(metadata, 'priority', 10) if metadata else 10
+            tools_list.append((priority, func, attr_name))
     return tools_list
 
 
@@ -50,23 +46,21 @@ def _collect_tools_from_module(module) -> List[Tuple[int, Callable, str]]:
     """从模块中收集工具及其优先级"""
     tools_list = []
     module_name = module.__name__
-
     for attr_name in dir(module):
         if attr_name.startswith('_'):
             continue
         attr = getattr(module, attr_name)
-        if inspect.isclass(attr):
-            if getattr(attr, '__module__', None) == module_name:
-                tools_list.extend(_collect_tools_from_class(attr))
-        # 如果是函数或协程函数,直接收集
-        elif (
-            callable(attr) and
-            (inspect.isfunction(attr) or inspect.iscoroutinefunction(attr))
+        if (
+            inspect.isclass(attr)
+            and getattr(attr, '__module__', None) == module_name
         ):
-            if getattr(attr, '__module__', None) == module_name:
-                # 模块级函数默认优先级为 10(最低优先级)
-                tools_list.append((10, attr, attr_name))
-
+            tools_list.extend(_collect_tools_from_class(attr))
+        elif (
+            callable(attr)
+            and (inspect.isfunction(attr) or inspect.iscoroutinefunction(attr))
+            and getattr(attr, '__module__', None) == module_name
+        ):
+            tools_list.append((10, attr, attr_name))
     return tools_list
 
 
