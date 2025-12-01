@@ -53,54 +53,43 @@ class HuaweiApiCloudTools:
         Returns:
             str: API 响应结果 (JSON 格式字符串)
         """
-        try:
-            logger.info(
-                f'执行华为云 API 请求: service={service}, action={action}, '
-                f'method={method}, zone={zone}'
+        logger.info(
+            f'执行华为云 API 请求: service={service}, action={action}, '
+            f'method={method}, zone={zone}'
+        )
+
+        # 只允许GET请求
+        if method.upper() != 'GET':
+            # TODO 允许特例：LTS 日志内容查询，后续删除
+            allow_post_lts_query = (
+                method.upper() == 'POST' and
+                service == 'lts' and
+                action.endswith('/content/query')
             )
+            if not allow_post_lts_query:
+                raise ValueError(f'错误: 当前仅支持GET请求方式, 不支持 "{method}"。')
 
-            # 只允许GET请求
-            if method.upper() != 'GET':
-                # TODO 允许特例：LTS 日志内容查询，后续删除
-                allow_post_lts_query = (
-                    method.upper() == 'POST' and
-                    service == 'lts' and
-                    action.endswith('/content/query')
-                )
-                if not allow_post_lts_query:
-                    raise ValueError(f'错误: 当前仅支持GET请求方式, 不支持 \"{method}\"。')
+        project_id, region, url = base_url(account, service, zone)
+        client = HuaweiCloudClient(identifier=account)
 
-            project_id, region, url = base_url(account, service, zone)
-            client = HuaweiCloudClient(identifier=account)
+        if '{project_id}' in action:
+            action = action.format(project_id=project_id)
 
-            if '{project_id}' in action:
-                action = action.format(project_id=project_id)
+        endpoint = f'{url}/{action.lstrip("/")}'
 
-            endpoint = f'{url}/{action.lstrip("/")}'
+        response = await client.request(
+            method.upper(), endpoint, data, params
+        )
 
-            response = await client.request(
-                method.upper(), endpoint, data, params
-            )
-
-            logger.info(
-                f'华为云 API 请求成功: service={service}, action={action}'
-            )
-            api_json = json.dumps(
-                response,
-                separators=(',', ':'),
-                ensure_ascii=False
-            )
-            return api_json
-
-        except Exception as e:
-            logger.error(
-                f'华为云 API 请求失败: service={service}, action={action}, '
-                f'错误: {str(e)}',
-                exc_info=True
-            )
-            raise ValueError(
-                f'API 请求错误: {str(e)}'
-            )
+        logger.info(
+            f'华为云 API 请求成功: service={service}, action={action}'
+        )
+        api_json = json.dumps(
+            response,
+            separators=(',', ':'),
+            ensure_ascii=False
+        )
+        return api_json
 
     @staticmethod
     @strict_error_handler

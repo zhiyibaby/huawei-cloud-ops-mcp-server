@@ -126,115 +126,107 @@ class HuaweiPriceTools:
             str: 查询结果 (JSON 格式字符串)
 
         """
-        try:
-            filters = filters or {}
+        filters = filters or {}
 
-            # 区域映射：如果查询北京一，自动查询北京四
-            if filters.get('region') and '北京一' in filters['region']:
-                original_region = filters['region']
-                filters['region'] = filters['region'].replace('北京一', '北京四')
-                logger.info(
-                    f'区域映射: "{original_region}" -> "{filters["region"]}"'
-                )
-
+        # 区域映射：如果查询北京一，自动查询北京四
+        if filters.get('region') and '北京一' in filters['region']:
+            original_region = filters['region']
+            filters['region'] = filters['region'].replace('北京一', '北京四')
             logger.info(
-                f'查询价格: service={service}, filters={filters}'
+                f'区域映射: "{original_region}" -> "{filters["region"]}"'
             )
 
-            db_path = HuaweiPriceTools._get_db_path(service)
-            if not db_path:
-                available_services = ', '.join(sorted(PRICE_DBS.keys()))
-                raise ValueError(
-                    f'服务 "{service}" 不可用或数据库文件不存在。'
-                    f'可用服务: {available_services}'
-                )
+        logger.info(
+            f'查询价格: service={service}, filters={filters}'
+        )
 
-            db = TinyDB(str(db_path), encoding='utf-8')
-            price_query = Query()
+        db_path = HuaweiPriceTools._get_db_path(service)
+        if not db_path:
+            available_services = ', '.join(sorted(PRICE_DBS.keys()))
+            raise ValueError(
+                f'服务 "{service}" 不可用或数据库文件不存在。'
+                f'可用服务: {available_services}'
+            )
 
-            # 根据 filters 动态生成查询条件
-            conditions = []
-            for field, value in filters.items():
-                if value:
-                    # 支持 spec 字段同时匹配 spec1 和 spec2
-                    if field == 'spec':
-                        conditions.append(
-                            (price_query.spec1.search(value)) |
-                            (price_query.spec2.search(value))
+        db = TinyDB(str(db_path), encoding='utf-8')
+        price_query = Query()
+
+        # 根据 filters 动态生成查询条件
+        conditions = []
+        for field, value in filters.items():
+            if value:
+                # 支持 spec 字段同时匹配 spec1 和 spec2
+                if field == 'spec':
+                    conditions.append(
+                        (price_query.spec1.search(value)) |
+                        (price_query.spec2.search(value))
+                    )
+                else:
+                    # 使用 getattr 动态获取字段查询对象
+                    field_query = getattr(price_query, field, None)
+                    if field_query:
+                        conditions.append(field_query.search(value))
+
+        if conditions:
+            query = conditions[0]
+            for condition in conditions[1:]:
+                query = query & condition
+            raw_results = db.search(query)
+        else:
+            # 如果没有查询条件，返回所有记录
+            raw_results = db.all()
+
+        if not raw_results:
+            db.close()
+            raise ValueError('未查询到价格')
+
+        db.close()
+
+        # 如果指定了 data_filters，对每个结果的 price_table.data 进行过滤
+        if data_filters:
+            filtered_results = []
+            for result in raw_results:
+                if 'price_table' in result:
+                    filtered_price_table = (
+                        HuaweiPriceTools._filter_price_table_data(
+                            result['price_table'],
+                            data_filters
                         )
-                    else:
-                        # 使用 getattr 动态获取字段查询对象
-                        field_query = getattr(price_query, field, None)
-                        if field_query:
-                            conditions.append(field_query.search(value))
+                    )
+                    # 如果过滤后还有数据，则保留该记录
+                    if filtered_price_table.get('data'):
+                        result_copy = result.copy()
+                        result_copy['price_table'] = filtered_price_table
+                        filtered_results.append(result_copy)
+                else:
+                    # 如果没有 price_table，保留原记录
+                    filtered_results.append(result)
 
-            if conditions:
-                query = conditions[0]
-                for condition in conditions[1:]:
-                    query = query & condition
-                raw_results = db.search(query)
-            else:
-                # 如果没有查询条件，返回所有记录
-                raw_results = db.all()
+            raw_results = filtered_results
 
             if not raw_results:
-                db.close()
-                raise ValueError('未查询到价格')
+                raise ValueError(
+                    f'未查询到符合 data_filters={data_filters} 的价格数据'
+                )
 
-            db.close()
+        # 返回 JSON 结果
+        response = {
+            'service': service,
+            'filters': filters,
+            'data_filters': data_filters,
+            'count': len(raw_results),
+            'results': raw_results
+        }
 
-            # 如果指定了 data_filters，对每个结果的 price_table.data 进行过滤
-            if data_filters:
-                filtered_results = []
-                for result in raw_results:
-                    if 'price_table' in result:
-                        filtered_price_table = (
-                            HuaweiPriceTools._filter_price_table_data(
-                                result['price_table'],
-                                data_filters
-                            )
-                        )
-                        # 如果过滤后还有数据，则保留该记录
-                        if filtered_price_table.get('data'):
-                            result_copy = result.copy()
-                            result_copy['price_table'] = filtered_price_table
-                            filtered_results.append(result_copy)
-                    else:
-                        # 如果没有 price_table，保留原记录
-                        filtered_results.append(result)
-
-                raw_results = filtered_results
-
-                if not raw_results:
-                    raise ValueError(
-                        f'未查询到符合 data_filters={data_filters} 的价格数据'
-                    )
-
-            # 返回 JSON 结果
-            response = {
-                'service': service,
-                'filters': filters,
-                'data_filters': data_filters,
-                'count': len(raw_results),
-                'results': raw_results
-            }
-
-            logger.info(
-                f'价格查询成功: service={service}, '
-                f'找到 {len(raw_results)} 条记录'
-            )
-            price_json = json.dumps(
-                response, separators=(',', ':'),
-                ensure_ascii=False
-            )
-            return price_json
-
-        except Exception as e:
-            logger.error(
-                f'价格查询失败: service={service}, 错误: {str(e)}',
-                exc_info=True
-            )
-            raise ValueError(f'价格查询错误: {str(e)}')
+        logger.info(
+            f'价格查询成功: service={service}, '
+            f'找到 {len(raw_results)} 条记录'
+        )
+        price_json = json.dumps(
+            response, separators=(',', ':'),
+            ensure_ascii=False
+        )
+        return price_json
 
     @staticmethod
     @strict_error_handler
@@ -250,36 +242,29 @@ class HuaweiPriceTools:
             str: 价格数据结构文档说明, 如果未指定服务，返回可用服务列表
 
         """
-        try:
-            if not service:
-                available_services = sorted(PRICE_DOCS.keys())
-                if not available_services:
-                    return '当前没有可用的价格数据结构文档。'
+        if not service:
+            available_services = sorted(PRICE_DOCS.keys())
+            if not available_services:
+                return '当前没有可用的价格数据结构文档。'
 
-                doc = '可用价格数据结构文档服务列表：\n\n'
-                for svc in available_services:
-                    doc += f'- {svc.upper()}\n'
-                logger.info(f'返回可用服务列表: {available_services}')
-                return doc
+            doc = '可用价格数据结构文档服务列表：\n\n'
+            for svc in available_services:
+                doc += f'- {svc.upper()}\n'
+            logger.info(f'返回可用服务列表: {available_services}')
+            return doc
 
-            service_lower = service.lower()
+        service_lower = service.lower()
 
-            if service_lower not in PRICE_DOCS:
-                available_services = ', '.join(sorted(PRICE_DOCS.keys()))
-                raise ValueError(
-                    f'服务 "{service}" 没有可用的价格数据结构文档。'
-                    f'可用服务: {available_services}'
-                )
-
-            doc_content = PRICE_DOCS[service_lower]
-
-            logger.info(
-                f'获取价格数据结构文档: service={service}'
+        if service_lower not in PRICE_DOCS:
+            available_services = ', '.join(sorted(PRICE_DOCS.keys()))
+            raise ValueError(
+                f'服务 "{service}" 没有可用的价格数据结构文档。'
+                f'可用服务: {available_services}'
             )
-            return ''.join(line.strip() for line in doc_content.splitlines())
-        except Exception as e:
-            logger.error(
-                f'获取价格数据结构文档失败: service={service}, 错误: {str(e)}',
-                exc_info=True
-            )
-            raise ValueError(f'获取价格数据结构文档错误: {str(e)}')
+
+        doc_content = PRICE_DOCS[service_lower]
+
+        logger.info(
+            f'获取价格数据结构文档: service={service}'
+        )
+        return ''.join(line.strip() for line in doc_content.splitlines())

@@ -1,4 +1,6 @@
-from huawei_cloud_ops_mcp_server.utils import ToolMetadata
+from huawei_cloud_ops_mcp_server.utils import (
+    ToolMetadata, strict_error_handler
+)
 from huawei_cloud_ops_mcp_server.logger import logger
 
 
@@ -73,6 +75,7 @@ class HuaweiWorkflowTools:
         )
 
     @staticmethod
+    @strict_error_handler
     async def workflow_guide(query: str) -> str:
         """工作流指导工具 - 根据用户查询提供工具调用建议
 

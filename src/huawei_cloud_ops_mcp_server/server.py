@@ -105,15 +105,9 @@ def load_resources(mcp: FastMCP):
     def prompt_understanding() -> str:
         """工具调用理解文档资源
 
-        提供完整的工具调用规范和工作流程说明文档。
-        此资源包含所有可用工具的详细说明、参数定义、调用流程和最佳实践。
-
-        建议在使用任何工具前先读取此资源，以了解正确的工具使用方式。
-
         Returns:
-            str: 工具调用理解文档内容（Markdown 格式）
+            str: 工具调用理解文档内容
         """
-        # 返回文档内容并去除多余换行与缩进，进行简单"压缩"
         return ''.join(
             line.strip() for line in prompt_understanding_docs.splitlines()
         )
