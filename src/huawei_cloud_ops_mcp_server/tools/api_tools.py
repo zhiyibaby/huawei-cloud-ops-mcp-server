@@ -83,8 +83,14 @@ class HuaweiApiCloudTools:
                 method.upper(), endpoint, data, params
             )
 
-            logger.info(f'华为云 API 请求成功: service={service}, action={action}')
-            api_json = json.dumps(response, indent=2, ensure_ascii=False)
+            logger.info(
+                f'华为云 API 请求成功: service={service}, action={action}'
+            )
+            api_json = json.dumps(
+                response,
+                separators=(',', ':'),
+                ensure_ascii=False
+            )
             return api_json
 
         except Exception as e:
@@ -118,7 +124,7 @@ class HuaweiApiCloudTools:
             ).strip()
         # 有指定服务时，返回该服务文档
         if service in docs:
-            return docs[service]
+            # 返回内容进行压缩（移除多余换行与首尾空白）
+            return ''.join(line.strip() for line in docs[service].splitlines())
         else:
-            logger.warning(f'未知服务: {service}，可用服务: {", ".join(docs.keys())}')
             raise ValueError(f'未知服务: {service}。可用服务: {", ".join(docs.keys())}')

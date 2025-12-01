@@ -160,7 +160,7 @@ class HuaweiWorkflowTools:
             )
 
         guidance.append('')
-        guidance.append('提示: 调用 prompt_understanding() 获取完整文档')
+        guidance.append('调用 prompt_understanding() 获取完整文档')
         guidance.append('=' * 60)
 
         doc = '\n'.join(guidance)
@@ -177,4 +177,7 @@ class HuaweiWorkflowTools:
         Returns:
             str: 工具调用理解文档内容
         """
-        return prompt_understanding_docs
+        # 返回文档内容并去除多余换行与缩进，进行简单“压缩”
+        return ''.join(
+            line.strip() for line in prompt_understanding_docs.splitlines()
+        )

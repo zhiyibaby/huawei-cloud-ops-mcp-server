@@ -97,14 +97,9 @@ class HuaweiCommonTools:
             account = HuaweiCommonTools._extract_account(query)
             if account:
                 # 找到了账号标识
-                result.append(f'✓ 检测到账号: {account}')
-                result.append('')
-                result.append('可以继续执行操作。')
-                logger.info(f'账号验证通过: {account}')
+                result.append(f'检测到账号: {account}, 继续执行操作')
             else:
                 # 没有找到账号
-                result.append('✗ 未检测到账号标识')
-                result.append('')
                 result.append('请指定要使用的账号:')
                 result.append('')
                 result.append('支持的账号:')
@@ -116,7 +111,6 @@ class HuaweiCommonTools:
                 result.append('  "获取 krsk2021 的服务器列表"')
                 result.append('')
                 result.append('或者在请求头中添加 Authorization 认证信息。')
-                logger.warning(f'输入缺少账号标识且无 Authorization: {query}')
 
         result.append('')
         result.append('=' * 60)

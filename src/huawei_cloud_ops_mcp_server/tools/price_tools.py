@@ -141,32 +141,6 @@ class HuaweiPriceTools:
         Returns:
             str: 查询结果 (JSON 格式字符串)
 
-        示例:
-            # 查询所有 ECS 价格
-            query_price(service='ecs')
-
-            # 按区域查询
-            query_price(service='ecs', filters={'region': '华北-北京四'})
-
-            # 多条件查询
-            query_price(
-                service='ecs',
-                filters={'region': '华北-北京四', 'spec2': 'Ac9s'}
-            )
-
-            # 查询并过滤 price_table.data 中的内容
-            query_price(
-                service='ecs',
-                filters={'region': '华北-北京四'},
-                data_filters={'规格名称': 'large', '核数': '2核'}
-            )
-
-            # 按列索引过滤
-            query_price(
-                service='ecs',
-                # 规格名称包含'ac9s'且内存为'4GiB'
-                data_filters={'0': 'ac9s', '2': '4GiB'}
-            )
         """
         try:
             filters = filters or {}
@@ -265,7 +239,10 @@ class HuaweiPriceTools:
                 f'价格查询成功: service={service}, '
                 f'找到 {len(raw_results)} 条记录'
             )
-            price_json = json.dumps(response, indent=2, ensure_ascii=False)
+            price_json = json.dumps(
+                response, separators=(',', ':'),
+                ensure_ascii=False
+            )
             return price_json
 
         except Exception as e:
@@ -340,8 +317,7 @@ class HuaweiPriceTools:
             logger.info(
                 f'获取价格数据结构文档: service={service}'
             )
-            return doc_content
-
+            return ''.join(line.strip() for line in doc_content.splitlines())
         except Exception as e:
             logger.error(
                 f'获取价格数据结构文档失败: service={service}, 错误: {str(e)}',

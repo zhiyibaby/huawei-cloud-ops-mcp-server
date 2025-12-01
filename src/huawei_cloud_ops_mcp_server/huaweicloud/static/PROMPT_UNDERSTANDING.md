@@ -56,24 +56,7 @@
 - 如果找到账号：返回确认信息（如 "检测到账号: xiaohei2018"）
 - 如果未找到账号：返回提示信息，要求用户指定账号
 
-**支持的账号：**
-- `xiaohei2018`
-- `krsk2021`
-
 **使用建议：** 在执行需要账号的操作前，使用此工具验证用户是否已指定账号。
-
-**示例：**
-```python
-# 包含账号的查询
-validate_account("查询 xiaohei2018 的 ECS 实例")
-# 返回: "✓ 检测到账号: xiaohei2018"
-
-# 不包含账号的查询
-validate_account("查询 ECS 实例列表")
-# 返回: "✗ 未检测到账号标识\n请指定要使用的账号..."
-```
-
-### 4. `get_huawei_api_docs` - 获取 API 文档
 
 **优先级：3**  
 **用途：** 查询特定服务或所有服务的 API 文档说明
@@ -83,16 +66,7 @@ validate_account("查询 ECS 实例列表")
   - 可选值: `"ecs"`, `"vpc"`, `"rds"`, `"evs"`, `"elb"`, `"ims"`, `"ces"`
   - 如果未提供或为 `None`，返回所有服务的文档
 
-**返回值：** 字符串，API 文档说明（Markdown 格式）
-
-**示例：**
-```python
-# 获取所有服务的文档
-get_huawei_api_docs()
-
-# 获取 ECS 服务的文档
-get_huawei_api_docs(service="ecs")
-```
+**返回值：** 字符串，API 文档说明
 
 ### 5. `get_price_structure_doc` - 获取价格结构文档
 
@@ -105,15 +79,6 @@ get_huawei_api_docs(service="ecs")
   - 如果未提供，返回所有可用服务的列表
 
 **返回值：** 字符串，价格结构文档（Markdown 格式）或可用服务列表
-
-**示例：**
-```python
-# 获取所有可用服务列表
-get_price_structure_doc()
-
-# 获取 ECS 服务的价格结构文档
-get_price_structure_doc(service="ecs")
-```
 
 ### 6. `query_price` - 查询价格信息
 
@@ -139,28 +104,6 @@ get_price_structure_doc(service="ecs")
 
 **特殊处理：**
 - 如果查询区域为"北京一"，会自动映射到"北京四"
-
-**示例：**
-```python
-# 查询所有 ECS 价格
-query_price(service="ecs")
-
-# 按区域查询
-query_price(service="ecs", filters={"region": "华北-北京四"})
-
-# 多条件查询
-query_price(
-    service="ecs",
-    filters={"region": "华北-北京四", "spec2": "Ac9s"}
-)
-
-# 查询并过滤价格表数据
-query_price(
-    service="ecs",
-    filters={"region": "华北-北京四"},
-    data_filters={"规格名称": "large", "核数": "2核"}
-)
-```
 
 ### 7. `huawei_api_request` - 华为云 API 请求工具
 
@@ -190,29 +133,6 @@ query_price(
 - `{project_id}` 占位符会自动替换为对应区域的项目ID
 - 根据 `zone` 自动确定 `region` 和 `project_id`
 - 自动使用环境变量中的认证信息
-
-**示例：**
-```python
-# 查询所有 ECS 实例
-huawei_api_request(
-    service="ecs",
-    action="v1/{project_id}/cloudservers/detail"
-)
-
-# 带查询参数
-huawei_api_request(
-    service="ecs",
-    action="v1/{project_id}/cloudservers/detail",
-    params={"name": "test", "status": "ACTIVE", "limit": 50}
-)
-
-# 指定区域
-huawei_api_request(
-    service="ecs",
-    action="v1/{project_id}/cloudservers/detail",
-    zone="华东-上海一"
-)
-```
 
 ## 调用流程
 
@@ -249,30 +169,6 @@ huawei_api_request(
 8. **错误处理**：工具调用失败会抛出 `ValueError`，包含错误信息
 9. **模糊匹配**：`query_price` 的 `filters` 和 `data_filters` 支持模糊匹配（子字符串匹配）
 10. **区域映射**：查询"北京一"区域的价格时，会自动映射到"北京四"
-
-## 常见服务端点参考
-
-### ECS (弹性云服务器)
-- 列表: `service="ecs"`, `action="v1/{project_id}/cloudservers/detail"`
-
-### VPC (虚拟私有云)
-- 列表: `service="vpc"`, `action="v1/{project_id}/vpcs"`
-- 子网列表: `service="vpc"`, `action="v1/{project_id}/subnets"`
-
-### RDS (关系型数据库)
-- 列表: `service="rds"`, `action="v3/{project_id}/instances"`
-
-### EVS (云硬盘)
-- 列表: `service="evs"`, `action="v2/{project_id}/cloudvolumes"`
-
-### ELB (弹性负载均衡)
-- 列表: `service="elb"`, `action="v2/{project_id}/elb/loadbalancers"`
-
-### IMS (镜像服务)
-- 列表: `service="ims"`, `action="v2/images"`
-
-### CES (云监控服务)
-- 查询监控数据: `service="ces"`, `action="V1.0/{project_id}/metric-data"`, `params={"namespace": "...", "metric_name": "...", "from": "...", "to": "..."}`
 
 ## 最佳实践
 
