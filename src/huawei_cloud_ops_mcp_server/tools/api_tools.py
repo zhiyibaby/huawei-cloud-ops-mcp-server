@@ -6,7 +6,6 @@ from huawei_cloud_ops_mcp_server.utils import (
     ToolMetadata, strict_error_handler
 )
 from huawei_cloud_ops_mcp_server.huaweicloud.utils import HuaweiCloudClient
-from huawei_cloud_ops_mcp_server.huaweicloud.apidocs import API_DOCS
 from huawei_cloud_ops_mcp_server.logger import logger
 
 
@@ -18,12 +17,6 @@ class HuaweiApiCloudTools:
             timeout=30,
             retryable=True,
         ),
-        'get_huawei_api_docs': ToolMetadata(
-            priority=3,
-            category='documentation',
-            timeout=10,
-            retryable=False,
-        )
     }
 
     @staticmethod
@@ -90,29 +83,3 @@ class HuaweiApiCloudTools:
             ensure_ascii=False
         )
         return api_json
-
-    @staticmethod
-    @strict_error_handler
-    async def get_huawei_api_docs(service: str = None) -> str:
-        """获取华为云 API 文档说明
-
-        Args:
-            service: 服务名称 (ecs, vpc, rds, evs, elb, ims, ces)
-            如果未提供，则默认返回所有文档
-
-        Returns:
-            str: API 文档说明
-        """
-        docs = API_DOCS
-        # 若未提供服务名，默认列出所有文档
-        if not service or service.lower() == 'all':
-            return '\n\n'.join(
-                f'=== {k.upper()} ===\n{v}'
-                for k, v in docs.items()
-            ).strip()
-        # 有指定服务时，返回该服务文档
-        if service in docs:
-            # 返回内容进行压缩（移除多余换行与首尾空白）
-            return ''.join(line.strip() for line in docs[service].splitlines())
-        else:
-            raise ValueError(f'未知服务: {service}。可用服务: {", ".join(docs.keys())}')

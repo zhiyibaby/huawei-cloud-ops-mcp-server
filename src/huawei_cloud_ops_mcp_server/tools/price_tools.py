@@ -8,7 +8,7 @@ from huawei_cloud_ops_mcp_server.utils import (
     ToolMetadata, strict_error_handler
 )
 from huawei_cloud_ops_mcp_server.huaweicloud.pricedocs import (
-    PRICE_DBS, PRICE_DOCS
+    PRICE_DBS
 )
 from huawei_cloud_ops_mcp_server.logger import logger
 
@@ -20,12 +20,6 @@ class HuaweiPriceTools:
             category='price_query',
             timeout=30,
             retryable=True
-        ),
-        'get_price_structure_doc': ToolMetadata(
-            priority=3,
-            category='price_documentation',
-            timeout=10,
-            retryable=False
         ),
     }
 
@@ -113,7 +107,9 @@ class HuaweiPriceTools:
     async def query_price(
         service: str = 'ecs',
         filters: Optional[Dict[str, str]] = None,
-        data_filters: Optional[Dict[str, str]] = None
+        data_filters: Optional[Dict[str, str]] = None,
+        page: int = 1,
+        page_size: int = 50
     ) -> str:
         """查询价格信息
 
@@ -121,6 +117,8 @@ class HuaweiPriceTools:
             service: 服务名称 (如: ecs, rds, evs 等)
             filters: 查询条件字典 (可选,支持模糊匹配)
             data_filters: price_table.data 的过滤条件 (可选,支持模糊匹配)
+            page: 页码, 从1开始 (默认: 1)
+            page_size: 每页记录数 (默认: 50)
 
         Returns:
             str: 查询结果 (JSON 格式字符串)
@@ -209,62 +207,49 @@ class HuaweiPriceTools:
                     f'未查询到符合 data_filters={data_filters} 的价格数据'
                 )
 
+        # 分页处理
+        total_count = len(raw_results)
+        if page_size > 0:
+            total_pages = (total_count + page_size - 1) // page_size
+        else:
+            total_pages = 1
+
+        # 验证页码有效性
+        if page < 1:
+            page = 1
+        elif page > total_pages and total_pages > 0:
+            page = total_pages
+
+        # 计算分页切片
+        start_index = (page - 1) * page_size
+        end_index = start_index + page_size
+        paginated_results = raw_results[start_index:end_index]
+
         # 返回 JSON 结果
         response = {
             'service': service,
             'filters': filters,
             'data_filters': data_filters,
-            'count': len(raw_results),
-            'results': raw_results
+            'pagination': {
+                'page': page,
+                'page_size': page_size,
+                'total_count': total_count,
+                'total_pages': total_pages,
+                'has_next': page < total_pages,
+                'has_prev': page > 1
+            },
+            'count': len(paginated_results),
+            'results': paginated_results
         }
 
         logger.info(
             f'价格查询成功: service={service}, '
-            f'找到 {len(raw_results)} 条记录'
+            f'找到 {total_count} 条记录, '
+            f'第 {page}/{total_pages} 页, '
+            f'本页 {len(paginated_results)} 条'
         )
         price_json = json.dumps(
             response, separators=(',', ':'),
             ensure_ascii=False
         )
         return price_json
-
-    @staticmethod
-    @strict_error_handler
-    async def get_price_structure_doc(
-        service: Optional[str] = None
-    ) -> str:
-        """获取价格数据结构文档说明
-
-        Args:
-            service: 服务名称 (如: ecs, rds, evs 等)
-
-        Returns:
-            str: 价格数据结构文档说明, 如果未指定服务，返回可用服务列表
-
-        """
-        if not service:
-            available_services = sorted(PRICE_DOCS.keys())
-            if not available_services:
-                return '当前没有可用的价格数据结构文档。'
-
-            doc = '可用价格数据结构文档服务列表：\n\n'
-            for svc in available_services:
-                doc += f'- {svc.upper()}\n'
-            logger.info(f'返回可用服务列表: {available_services}')
-            return doc
-
-        service_lower = service.lower()
-
-        if service_lower not in PRICE_DOCS:
-            available_services = ', '.join(sorted(PRICE_DOCS.keys()))
-            raise ValueError(
-                f'服务 "{service}" 没有可用的价格数据结构文档。'
-                f'可用服务: {available_services}'
-            )
-
-        doc_content = PRICE_DOCS[service_lower]
-
-        logger.info(
-            f'获取价格数据结构文档: service={service}'
-        )
-        return ''.join(line.strip() for line in doc_content.splitlines())
