@@ -36,7 +36,6 @@ class HuaweiPriceTools:
             return None
         db_path = Path(PRICE_DBS[service])
         if not db_path.exists():
-            logger.warning(f'价格数据库文件不存在: {db_path}')
             return None
         return db_path
 
@@ -87,11 +86,6 @@ class HuaweiPriceTools:
                     col_index = header_to_index[filter_key]
                 else:
                     # 列名或索引无效，跳过此过滤条件
-                    logger.warning(
-                        f'无效的过滤字段: {filter_key},'
-                        f'可用列名: {headers},'
-                        f'索引范围: 0-{len(headers)-1}'
-                    )
                     continue
 
                 # 检查列索引是否有效
@@ -126,17 +120,7 @@ class HuaweiPriceTools:
         Args:
             service: 服务名称 (如: ecs, rds, evs 等)
             filters: 查询条件字典 (可选,支持模糊匹配)
-                支持的字段: region, zone, cpu_arch, spec1, spec2, image
-                例如: {'region': '华北-北京四', 'spec2': 'Ac9s', 'image': 'Windows'}
             data_filters: price_table.data 的过滤条件 (可选,支持模糊匹配)
-                支持两种方式：
-                1. 按列名（表头）: {'规格名称': 'ac9s.large.2', '核数': '2核',
-                   '内存': '4GiB'}
-                2. 按列索引: {'0': 'ac9s', '1': '2核'}
-                   (索引从0开始,对应headers的顺序)
-                3. 混合使用: {'规格名称': 'ac9s', '1': '4GiB'}
-                例如: {'规格名称': 'large', '核数': '2核'} 会匹配所有规格名称
-                包含'large'且核数为'2核'的行
 
         Returns:
             str: 查询结果 (JSON 格式字符串)
@@ -260,46 +244,21 @@ class HuaweiPriceTools:
         """获取价格数据结构文档说明
 
         Args:
-            service: 服务名称 (如: ecs, rds, evs 等)，可选
-                如果不提供，将返回所有可用服务的列表
+            service: 服务名称 (如: ecs, rds, evs 等)
 
         Returns:
-            str: 价格数据结构文档说明 (Markdown 格式)
-                如果未指定服务，返回可用服务列表
+            str: 价格数据结构文档说明, 如果未指定服务，返回可用服务列表
 
-        示例:
-            # 获取所有可用服务的列表
-            get_price_structure_doc()
-
-            # 获取 ECS 服务的价格数据结构文档
-            get_price_structure_doc(service='ecs')
-
-            # 获取 RDS 服务的价格数据结构文档
-            get_price_structure_doc(service='rds')
         """
         try:
             if not service:
-                # 返回所有可用服务的列表
                 available_services = sorted(PRICE_DOCS.keys())
                 if not available_services:
                     return '当前没有可用的价格数据结构文档。'
 
-                doc = '# 可用价格数据结构文档\n\n'
-                doc += '以下服务提供了价格数据结构说明文档：\n\n'
+                doc = '可用价格数据结构文档服务列表：\n\n'
                 for svc in available_services:
-                    doc += (
-                        f'- **{svc.upper()}**: '
-                        f'使用 `get_price_structure_doc(service="{svc}")` '
-                        f'获取详细文档\n'
-                    )
-                doc += '\n'
-                doc += '## 使用说明\n\n'
-                doc += (
-                    '调用 `get_price_structure_doc(service="服务名称")` '
-                    '可以获取指定服务的详细价格数据结构说明，'
-                    '包括字段说明、数据格式、查询方式等信息。\n'
-                )
-
+                    doc += f'- {svc.upper()}\n'
                 logger.info(f'返回可用服务列表: {available_services}')
                 return doc
 

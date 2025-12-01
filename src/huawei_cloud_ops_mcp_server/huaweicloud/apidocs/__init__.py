@@ -1,6 +1,5 @@
 from importlib import resources
 
-from huawei_cloud_ops_mcp_server.logger import logger
 
 API_DOCS = {}
 SUPPORTED_SERVICES = []
@@ -20,4 +19,4 @@ for name in services:
         API_DOCS[name.lower()] = md_path.read_text(encoding='utf-8')
         SUPPORTED_SERVICES.append(name.lower())
     except Exception as e:
-        logger.warning(f'无法读取API文档文件 {md_path}: {e}')
+        raise RuntimeError(f'无法读取API文档文件 {md_path}: {e}')

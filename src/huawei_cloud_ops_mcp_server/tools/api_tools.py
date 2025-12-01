@@ -68,7 +68,6 @@ class HuaweiApiCloudTools:
                     action.endswith('/content/query')
                 )
                 if not allow_post_lts_query:
-                    logger.warning(f'不支持的请求方法: {method}')
                     raise ValueError(f'错误: 当前仅支持GET请求方式, 不支持 \"{method}\"。')
 
             project_id, region, url = base_url(account, service, zone)

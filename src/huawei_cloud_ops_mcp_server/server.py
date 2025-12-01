@@ -10,6 +10,9 @@ from huawei_cloud_ops_mcp_server.config import (
     MCP_TRANSPORT, MCP_HOST, MCP_PORT
 )
 from huawei_cloud_ops_mcp_server.logger import logger
+from huawei_cloud_ops_mcp_server.huaweicloud.static import (
+    prompt_understanding_docs
+)
 
 
 def _collect_tools_from_class(cls) -> List[Tuple[int, Callable, str]]:
@@ -96,9 +99,32 @@ def load_tools(mcp: FastMCP):
     logger.info(f'工具加载完成,共注册 {len(all_tools)} 个工具')
 
 
+def load_resources(mcp: FastMCP):
+    """加载资源到MCP服务器"""
+    @mcp.resource(uri="data://prompt_understanding")
+    def prompt_understanding() -> str:
+        """工具调用理解文档资源
+
+        提供完整的工具调用规范和工作流程说明文档。
+        此资源包含所有可用工具的详细说明、参数定义、调用流程和最佳实践。
+
+        建议在使用任何工具前先读取此资源，以了解正确的工具使用方式。
+
+        Returns:
+            str: 工具调用理解文档内容（Markdown 格式）
+        """
+        # 返回文档内容并去除多余换行与缩进，进行简单"压缩"
+        return ''.join(
+            line.strip() for line in prompt_understanding_docs.splitlines()
+        )
+
+    logger.info('资源加载完成,已注册 prompt_understanding 资源')
+
+
 def main(mcp: FastMCP, transport: str):
     logger.info(f'启动 MCP 服务器,传输方式: {transport}')
     load_tools(mcp)
+    load_resources(mcp)
     mcp.run(transport=transport)
 
 
@@ -109,6 +135,7 @@ async def main_async(
     if transport == 'http':
         logger.info(f'HTTP 模式,监听地址: {host}:{port}')
     load_tools(mcp)
+    load_resources(mcp)
     if transport == 'http':
         await mcp.run_async(transport=transport, host=host, port=port)
     else:

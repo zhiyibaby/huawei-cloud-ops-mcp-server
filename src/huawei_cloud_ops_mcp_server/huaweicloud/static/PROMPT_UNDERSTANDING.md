@@ -9,7 +9,6 @@
 | 工具名称 | 优先级 | 类别 | 说明 |
 |---------|--------|------|------|
 | `workflow_guide` | 0 | workflow | 工作流指导工具（最高优先级） |
-| `prompt_understanding` | 1 | documentation | 理解 |
 | `validate_account` | 2 | validation | 验证账号标识 |
 | `get_huawei_api_docs` | 3 | documentation | 获取 API 文档 |
 | `get_price_structure_doc` | 3 | price_documentation | 获取价格结构文档 |
@@ -35,16 +34,7 @@
 
 **使用建议：** 不确定如何开始时，先调用此工具获取指导。
 
-### 2. `get_workflow_docs` - 获取工具调用文档
-
-**优先级：1**  
-**用途：** 返回完整的工具调用理解文档
-
-**参数：** 无参数
-
-**返回值：** 字符串，完整的工具调用文档内容（即本文档）
-
-### 3. `validate_account` - 验证账号标识
+### 2. `validate_account` - 验证账号标识
 
 **优先级：2**  
 **用途：** 验证用户输入中是否包含有效的账号标识
@@ -58,6 +48,8 @@
 
 **使用建议：** 在执行需要账号的操作前，使用此工具验证用户是否已指定账号。
 
+### 3. `get_huawei_api_docs` - 获取 API 文档
+
 **优先级：3**  
 **用途：** 查询特定服务或所有服务的 API 文档说明
 
@@ -68,7 +60,7 @@
 
 **返回值：** 字符串，API 文档说明
 
-### 5. `get_price_structure_doc` - 获取价格结构文档
+### 4. `get_price_structure_doc` - 获取价格结构文档
 
 **优先级：3**  
 **用途：** 获取指定服务的价格结构说明文档
@@ -80,7 +72,7 @@
 
 **返回值：** 字符串，价格结构文档（Markdown 格式）或可用服务列表
 
-### 6. `query_price` - 查询价格信息
+### 5. `query_price` - 查询价格信息
 
 **优先级：5**  
 **用途：** 查询华为云服务的价格信息
@@ -105,7 +97,7 @@
 **特殊处理：**
 - 如果查询区域为"北京一"，会自动映射到"北京四"
 
-### 7. `huawei_api_request` - 华为云 API 请求工具
+### 6. `huawei_api_request` - 华为云 API 请求工具
 
 **优先级：5**  
 **用途：** 执行华为云 API 调用
@@ -134,12 +126,21 @@
 - 根据 `zone` 自动确定 `region` 和 `project_id`
 - 自动使用环境变量中的认证信息
 
+## 资源说明
+
+### `prompt_understanding` - 工具调用理解文档资源
+
+**资源 URI：** `data://prompt_understanding`  
+**用途：** 提供完整的工具调用规范和工作流程说明文档（即本文档）
+
+**访问方式：** 通过 MCP 资源协议访问，无需调用工具函数。客户端可以通过资源 URI `data://prompt_understanding` 获取本文档的完整内容。
+
 ## 调用流程
 
 ### 通用工作流程
 
 1. **不确定如何开始时**：先调用 `workflow_guide(query="用户需求描述")` 获取工作流建议
-2. **需要完整文档时**：调用 `get_workflow_docs()` 获取工具调用文档
+2. **需要完整文档时**：通过 Resource URI `data://prompt_understanding` 获取工具调用文档
 3. **账号验证**：如果操作需要指定账号，先调用 `validate_account(query="用户输入")` 验证账号
 4. **根据工作流建议**：按照建议的工具调用顺序执行操作
 

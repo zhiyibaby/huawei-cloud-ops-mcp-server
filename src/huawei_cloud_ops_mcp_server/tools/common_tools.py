@@ -56,18 +56,6 @@ class HuaweiCommonTools:
                 - 如果找到账号：返回确认信息
                 - 如果未找到账号且无 Authorization：返回提示用户指定账号的信息
 
-        示例:
-            # 包含账号
-            validate_account("查询 xiaohei2018 的 ECS 实例")
-            # 返回: "检测到账号: xiaohei2018"
-
-            # 不包含账号但请求头有 Authorization
-            validate_account("查询 ECS 实例列表")
-            # 返回: "检测到请求头中的 Authorization 认证信息"
-
-            # 不包含账号且无 Authorization
-            validate_account("查询 ECS 实例列表")
-            # 返回: "请指定要查询的账号..."
         """
         logger.info(f'验证账号: 分析输入 "{query}"')
 
@@ -85,7 +73,7 @@ class HuaweiCommonTools:
                 authorization = request.headers.get('Authorization')
                 if authorization:
                     has_authorization = True
-                    result.append('✓ 检测到请求头中的 Authorization 认证信息')
+                    result.append('检测到请求头中的 Authorization 认证信息')
                     result.append('')
                     result.append('可以继续执行操作，无需指定账号。')
                     logger.info('账号验证通过: 使用请求头中的 Authorization')

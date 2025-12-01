@@ -10,20 +10,6 @@
 - **多区域支持**: 支持华为云全球多个区域，自动处理 project_id 和 region 映射
 - **文档集成**: 内置 API 文档和价格结构文档，支持快速查询
 
-## 主要工具
-
-### API 工具
-- `huawei_api_request`: 执行华为云 API 请求
-- `get_huawei_api_docs`: 获取华为云 API 文档
-
-### 价格工具
-- `query_price`: 查询服务价格信息（支持多条件过滤）
-- `get_price_structure_doc`: 获取价格数据结构文档
-
-### 工作流工具
-- `workflow_guide`: 根据用户查询提供工具调用建议
-- `prompt_understanding`: 获取工具调用理解文档
-
 ## 安装
 
 ### 前置要求
@@ -70,8 +56,6 @@ docker run -d --rm \
   -p 8000:8000 \
   huawei-cloud-ops-mcp-server
 ```
-
-**注意**：`MCP_HOST` 和 `MCP_TRANSPORT` 在 Dockerfile 中已默认设置为 `0.0.0.0` 和 `http`，通常无需手动指定。如果遇到线程限制问题，可以使用 `--ulimit nproc=4096` 参数。
 
 3. MCP 客户端配置（HTTP 传输）：
 ```json

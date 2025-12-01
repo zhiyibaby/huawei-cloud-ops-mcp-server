@@ -1,8 +1,5 @@
 from huawei_cloud_ops_mcp_server.utils import ToolMetadata
 from huawei_cloud_ops_mcp_server.logger import logger
-from huawei_cloud_ops_mcp_server.huaweicloud.static import (
-    prompt_understanding_docs
-)
 
 
 class HuaweiWorkflowTools:
@@ -10,12 +7,6 @@ class HuaweiWorkflowTools:
         'workflow_guide': ToolMetadata(
             priority=0,  # 最高优先级
             category='workflow',
-            timeout=10,
-            retryable=False
-        ),
-        'prompt_understanding': ToolMetadata(
-            priority=1,
-            category='documentation',
             timeout=10,
             retryable=False
         ),
@@ -86,7 +77,6 @@ class HuaweiWorkflowTools:
         """工作流指导工具 - 根据用户查询提供工具调用建议
 
         此工具具有最高优先级，用于分析用户请求并指导后续工具调用流程。
-        工具会先查看理解文档，然后基于文档内容提供准确的工具调用建议。
 
         Args:
             query: 用户的查询内容或需求描述
@@ -95,89 +85,57 @@ class HuaweiWorkflowTools:
             str: 工作流指导建议，包含基于理解文档的详细调用步骤
 
         工作流规则:
-        1. 先查看 prompt_understanding 工具理解文档
-        2. 根据文档中的工具列表和调用流程提供建议
-        3. 如果查询与价格相关，建议按顺序:
+        1. 根据文档中的工具列表和调用流程提供建议
+        2. 如果查询与价格相关，建议按顺序:
            a. 先查看价格文档 (get_price_structure_doc)
            b. 再调用价格工具 (query_price)
-        4. 如果查询与API相关,建议按顺序:
-           a. 先验证账号 (validate_account)
-           b. 再查看文档 (get_huawei_api_docs)
-           c. 最后调用API (huawei_api_request)
-        5. 如果同时涉及价格和API,先处理价格查询,再验证账号后调用API
+        3. 如果查询与API相关,建议按顺序:
+           a. 通过 Resource URI `data://prompt_understanding` 获取工具调用理解文档
+           b. 先验证账号 (validate_account)
+           c. 再查看文档 (get_huawei_api_docs)
+           d. 最后调用API (huawei_api_request)
+        4. 如果同时涉及价格和API,先处理价格查询,再验证账号后调用API
 
-        示例:
-            # 价格查询
-            workflow_guide("查询ECS云服务器的价格")
-            # 返回: 基于理解文档的建议，先调用 get_price_structure_doc,再调用 query_price
-
-            # API查询
-            workflow_guide("查询所有ECS实例")
-            # 返回: 基于理解文档的建议，先调用 get_huawei_api_docs, 再调用API
         """
         logger.info(f'工作流指导: 分析查询 "{query}"')
 
         # 分析查询类型
         is_price = HuaweiWorkflowTools._is_price_related(query)
         is_api = HuaweiWorkflowTools._is_api_related(query)
-
         # 基于文档内容提供简化的指导建议
         guidance = []
-        guidance.append('=' * 60)
         guidance.append('工作流指导')
-        guidance.append('=' * 60)
-
         # 根据查询类型提供具体建议
         if is_price and is_api:
-            guidance.append('检测: 价格+API查询')
-            guidance.append('')
+            guidance.append('价格+API查询')
             guidance.append('1. get_price_structure_doc(service="服务名称")')
             guidance.append('2. query_price(service="服务名称", filters={})')
-            guidance.append('3. validate_account(query="用户输入")')
-            guidance.append('4. get_huawei_api_docs(service="服务名称")')
-            guidance.append('5. huawei_api_request(service="服务名称", ...)')
+            guidance.append('3. Resource URI: data://prompt_understanding')
+            guidance.append('4. validate_account(query="用户输入")')
+            guidance.append('5. get_huawei_api_docs(service="服务名称")')
+            guidance.append('6. huawei_api_request(service="服务名称", ...)')
 
         elif is_price:
-            guidance.append('检测: 价格查询')
-            guidance.append('')
+            guidance.append('价格查询')
             guidance.append('1. get_price_structure_doc(service="服务名称")')
             guidance.append('2. query_price(service="服务名称", filters={})')
 
         elif is_api:
-            guidance.append('检测: API查询')
-            guidance.append('')
+            guidance.append('API查询')
+            guidance.append('在使用工具前，请先读取工具调用理解文档：')
+            guidance.append('Resource URI: data://prompt_understanding')
             guidance.append('1. validate_account(query="用户输入")')
             guidance.append('2. get_huawei_api_docs(service="服务名称")')
             guidance.append('3. huawei_api_request(service="服务名称", ...)')
 
         else:
-            guidance.append('检测: 无法判断类型')
-            guidance.append('')
+            guidance.append('无法判断类型')
             guidance.append('价格查询: get_price_structure_doc → query_price')
             guidance.append(
                 'API操作: validate_account → '
                 'get_huawei_api_docs → huawei_api_request'
             )
-
-        guidance.append('')
-        guidance.append('调用 prompt_understanding() 获取完整文档')
-        guidance.append('=' * 60)
-
-        doc = '\n'.join(guidance)
+        doc = ''.join(line.strip() for line in guidance)
         log_msg = (f'工作流指导完成: 查询类型 - 价格={is_price}, API={is_api}')
         logger.info(log_msg)
         return doc
-
-    @staticmethod
-    async def prompt_understanding() -> str:
-        """获取工具调用理解文档
-
-        返回完整的工具调用规范和工作流程说明文档。
-
-        Returns:
-            str: 工具调用理解文档内容
-        """
-        # 返回文档内容并去除多余换行与缩进，进行简单“压缩”
-        return ''.join(
-            line.strip() for line in prompt_understanding_docs.splitlines()
-        )

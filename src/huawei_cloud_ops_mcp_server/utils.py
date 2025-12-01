@@ -129,11 +129,6 @@ async def http_request(
                 result = response.json()
             except json.JSONDecodeError:
                 result = {'text': response.text}
-
-            if response.status_code >= 400:
-                logger.warning(
-                    f'HTTP 请求返回错误状态码: {response.status_code}, 响应: {result}'
-                )
             return {
                 'status_code': response.status_code,
                 'data': result

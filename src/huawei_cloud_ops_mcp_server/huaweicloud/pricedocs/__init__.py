@@ -1,6 +1,5 @@
 from importlib import resources
 
-from huawei_cloud_ops_mcp_server.logger import logger
 
 PRICE_DBS = {}
 PRICE_DOCS = {}
@@ -36,4 +35,4 @@ for md_path in md_files:
     try:
         PRICE_DOCS[service_name] = md_path.read_text(encoding='utf-8')
     except Exception as e:
-        logger.warning(f'无法读取价格文档文件 {md_path}: {e}')
+        raise RuntimeError(f'无法读取价格文档文件 {md_path}: {e}')
