@@ -13,6 +13,8 @@ from huawei_cloud_ops_mcp_server.logger import logger
 from huawei_cloud_ops_mcp_server.huaweicloud.static import (
     prompt_understanding_docs
 )
+from huawei_cloud_ops_mcp_server.huaweicloud.apidocs import API_DOCS
+from huawei_cloud_ops_mcp_server.huaweicloud.pricedocs import PRICE_DOCS
 
 
 def _collect_tools_from_class(cls) -> List[Tuple[int, Callable, str]]:
@@ -101,6 +103,8 @@ def load_tools(mcp: FastMCP):
 
 def load_resources(mcp: FastMCP):
     """加载资源到MCP服务器"""
+
+    # 注册 prompt_understanding 资源
     @mcp.resource(uri="data://prompt_understanding")
     def prompt_understanding() -> str:
         """工具调用理解文档资源
@@ -108,11 +112,48 @@ def load_resources(mcp: FastMCP):
         Returns:
             str: 工具调用理解文档内容
         """
-        return ''.join(
-            line.strip() for line in prompt_understanding_docs.splitlines()
-        )
+        return prompt_understanding_docs
 
-    logger.info('资源加载完成,已注册 prompt_understanding 资源')
+    # 注册所有服务的 API 文档资源
+    for service_name, doc_content in API_DOCS.items():
+        uri = f"data://api_docs/{service_name}"
+
+        def create_api_doc_handler(res_uri: str, content: str):
+            @mcp.resource(uri=res_uri)
+            def api_doc() -> str:
+                """华为云 API 文档资源
+
+                Returns:
+                    str: API 文档内容
+                """
+                return content
+            return api_doc
+
+        create_api_doc_handler(uri, doc_content)
+
+    # 注册所有服务的价格文档资源
+    for service_name, doc_content in PRICE_DOCS.items():
+        uri = f"data://price_docs/{service_name}"
+
+        def create_price_doc_handler(res_uri: str, content: str):
+            @mcp.resource(uri=res_uri)
+            def price_doc() -> str:
+                """华为云价格数据结构文档资源
+
+                Returns:
+                    str: 价格数据结构文档内容
+                """
+                return content
+            return price_doc
+
+        create_price_doc_handler(uri, doc_content)
+
+    logger.info(
+        f'资源加载完成: '
+        f'已注册 prompt_understanding 资源、'
+        f'{len(API_DOCS)} 个 API 文档资源和 '
+        f'{len(PRICE_DOCS)} 个价格文档资源'
+    )
 
 
 def main(mcp: FastMCP, transport: str):
