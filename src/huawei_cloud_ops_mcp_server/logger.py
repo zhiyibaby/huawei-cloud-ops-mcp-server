@@ -36,16 +36,15 @@ def setup_logger(
     Returns:
         logging.Logger: 配置好的日志记录器
     """
-    import os
-
     # 获取日志级别
     if log_level is None:
-        log_level = os.getenv('LOG_LEVEL', 'INFO').upper()
+        from huawei_cloud_ops_mcp_server.config import LogConfig
+        log_level = LogConfig.get_level()
 
     # 获取日志文件路径
     if log_file is None:
-        default_log_path = _project_root / 'logs' / 'app.log'
-        log_file = os.getenv('LOG_FILE', str(default_log_path))
+        from huawei_cloud_ops_mcp_server.config import LogConfig
+        log_file = LogConfig.get_file()
 
     # 创建日志记录器
     logger = logging.getLogger(name)

@@ -104,8 +104,7 @@ def load_tools(mcp: FastMCP):
 def load_resources(mcp: FastMCP):
     """加载资源到MCP服务器"""
 
-    # 注册 prompt_understanding 资源
-    @mcp.resource(uri="data://prompt_understanding")
+    @mcp.resource(uri='data://prompt_understanding')
     def prompt_understanding() -> str:
         """工具调用理解文档资源
 
@@ -114,9 +113,8 @@ def load_resources(mcp: FastMCP):
         """
         return prompt_understanding_docs
 
-    # 注册所有服务的 API 文档资源
     for service_name, doc_content in API_DOCS.items():
-        uri = f"data://api_docs/{service_name}"
+        uri = f'data://api_docs/{service_name}'
 
         def create_api_doc_handler(res_uri: str, content: str):
             @mcp.resource(uri=res_uri)
@@ -131,9 +129,8 @@ def load_resources(mcp: FastMCP):
 
         create_api_doc_handler(uri, doc_content)
 
-    # 注册所有服务的价格文档资源
     for service_name, doc_content in PRICE_DOCS.items():
-        uri = f"data://price_docs/{service_name}"
+        uri = f'data://price_docs/{service_name}'
 
         def create_price_doc_handler(res_uri: str, content: str):
             @mcp.resource(uri=res_uri)

@@ -147,38 +147,39 @@ class HuaweiPriceTools:
             )
 
         db = TinyDB(str(db_path), encoding='utf-8')
-        price_query = Query()
+        try:
+            price_query = Query()
 
-        # 根据 filters 动态生成查询条件
-        conditions = []
-        for field, value in filters.items():
-            if value:
-                # 支持 spec 字段同时匹配 spec1 和 spec2
-                if field == 'spec':
-                    conditions.append(
-                        (price_query.spec1.search(value)) |
-                        (price_query.spec2.search(value))
-                    )
-                else:
-                    # 使用 getattr 动态获取字段查询对象
-                    field_query = getattr(price_query, field, None)
-                    if field_query:
-                        conditions.append(field_query.search(value))
+            # 根据 filters 动态生成查询条件
+            conditions = []
+            for field, value in filters.items():
+                if value:
+                    # 支持 spec 字段同时匹配 spec1 和 spec2
+                    if field == 'spec':
+                        conditions.append(
+                            (price_query.spec1.search(value)) |
+                            (price_query.spec2.search(value))
+                        )
+                    else:
+                        # 使用 getattr 动态获取字段查询对象
+                        field_query = getattr(price_query, field, None)
+                        if field_query:
+                            conditions.append(field_query.search(value))
 
-        if conditions:
-            query = conditions[0]
-            for condition in conditions[1:]:
-                query = query & condition
-            raw_results = db.search(query)
-        else:
-            # 如果没有查询条件，返回所有记录
-            raw_results = db.all()
+            if conditions:
+                query = conditions[0]
+                for condition in conditions[1:]:
+                    query = query & condition
+                raw_results = db.search(query)
+            else:
+                # 如果没有查询条件，返回所有记录
+                raw_results = db.all()
 
-        if not raw_results:
+            if not raw_results:
+                raise ValueError('未查询到价格')
+        finally:
+            # 确保数据库连接被关闭
             db.close()
-            raise ValueError('未查询到价格')
-
-        db.close()
 
         # 如果指定了 data_filters，对每个结果的 price_table.data 进行过滤
         if data_filters:

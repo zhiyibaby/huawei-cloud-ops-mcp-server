@@ -54,10 +54,8 @@ class BaseConfigGroup:
         default: Any = None,
         validator: Optional[Callable[[str], Any]] = None
     ) -> Any:
+        # 环境变量已在模块加载时通过 load_dotenv 加载，直接获取即可
         value = os.getenv(key)
-        if value is None and default is None:
-            load_dotenv(dotenv_path=_env_file, override=False)
-            value = os.getenv(key)
         if value is None:
             value = default
 
@@ -90,8 +88,8 @@ class MCPConfig(BaseConfigGroup):
     @staticmethod
     def get_host() -> str:
         """获取 MCP 主机地址"""
-        host = os.getenv('MCP_HOST')
-        if host in (None, '', 'host'):
+        host = MCPConfig._get_env('MCP_HOST')
+        if not host or host == 'host':  # 'host' 是无效的占位符值
             transport = MCPConfig.get_transport()
             host = '0.0.0.0' if transport == 'http' else '127.0.0.1'
         return host
@@ -99,20 +97,23 @@ class MCPConfig(BaseConfigGroup):
     @staticmethod
     def get_port() -> int:
         """获取 MCP 端口号"""
-        port_str = os.getenv('MCP_PORT', '8000')
-        try:
-            port = int(port_str)
-            if port < 1 or port > 65535:
+        def _validate_port(value: str) -> int:
+            """验证并转换端口号"""
+            try:
+                port = int(value)
+                if port < 1 or port > 65535:
+                    _get_logger().warning(
+                        f'端口号 {port} 超出有效范围(1-65535),将使用默认值 8000'
+                    )
+                    return 8000
+                return port
+            except ValueError:
                 _get_logger().warning(
-                    f'端口号 {port} 超出有效范围(1-65535),将使用默认值 8000'
+                    f'无效的端口号 {value},将使用默认值 8000'
                 )
                 return 8000
-            return port
-        except ValueError:
-            _get_logger().warning(
-                f'无效的端口号 {port_str},将使用默认值 8000'
-            )
-            return 8000
+
+        return MCPConfig._get_env('MCP_PORT', '8000', _validate_port)
 
 
 class LogConfig(BaseConfigGroup):
@@ -134,6 +135,28 @@ class HuaweiCloudConfig(BaseConfigGroup):
     """华为云相关配置"""
 
     @staticmethod
+    def _get_key_name(identifier: Optional[str], key_type: str) -> str:
+        """根据 identifier 获取密钥名称
+
+        Args:
+            identifier: 标识字符串(如 project_id)用于判断使用哪组密钥
+            key_type: 密钥类型，'ACCESS_KEY' 或 'SECRET_KEY'
+
+        Returns:
+            str: 密钥名称
+        """
+        account = 'XIAOHEI2018'  # 默认账号
+
+        if identifier:
+            identifier_lower = identifier.lower()
+            if 'krsk2021' in identifier_lower:
+                account = 'KRSK2021'
+            elif 'xiaohei2018' in identifier_lower:
+                account = 'XIAOHEI2018'
+
+        return f'{account}_CLOUD_{key_type}'
+
+    @staticmethod
     def get_access_key(identifier: Optional[str] = None) -> Optional[str]:
         """获取华为云访问密钥
 
@@ -143,15 +166,7 @@ class HuaweiCloudConfig(BaseConfigGroup):
                        如果包含 'xiaohei2018',使用 XIAOHEI2018 密钥
                        默认使用 XIAOHEI2018 密钥
         """
-        key_name = 'XIAOHEI2018_CLOUD_ACCESS_KEY'
-
-        if identifier:
-            identifier_lower = identifier.lower()
-            if 'krsk2021' in identifier_lower:
-                key_name = 'KRSK2021_CLOUD_ACCESS_KEY'
-            elif 'xiaohei2018' in identifier_lower:
-                key_name = 'XIAOHEI2018_CLOUD_ACCESS_KEY'
-
+        key_name = HuaweiCloudConfig._get_key_name(identifier, 'ACCESS_KEY')
         value = HuaweiCloudConfig._get_env(key_name)
         if value is None:
             _get_logger().warning(
@@ -169,15 +184,7 @@ class HuaweiCloudConfig(BaseConfigGroup):
                        如果包含 'xiaohei2018'，使用 XIAOHEI2018 密钥
                        默认使用 XIAOHEI2018 密钥
         """
-        key_name = 'XIAOHEI2018_CLOUD_SECRET_KEY'
-
-        if identifier:
-            identifier_lower = identifier.lower()
-            if 'krsk2021' in identifier_lower:
-                key_name = 'KRSK2021_CLOUD_SECRET_KEY'
-            elif 'xiaohei2018' in identifier_lower:
-                key_name = 'XIAOHEI2018_CLOUD_SECRET_KEY'
-
+        key_name = HuaweiCloudConfig._get_key_name(identifier, 'SECRET_KEY')
         value = HuaweiCloudConfig._get_env(key_name)
         if value is None:
             _get_logger().warning(

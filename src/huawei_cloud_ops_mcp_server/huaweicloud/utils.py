@@ -34,7 +34,8 @@ class HuaweiCloudClient:
             return r.headers
         except Exception as e:
             logger.error(f'生成华为云 API 签名时发生错误: {str(e)}', exc_info=True)
-            raise RuntimeError(f'生成华为云 API 签名时发生错误: {str(e)}')
+            # 保留原始异常信息
+            raise RuntimeError(f'生成华为云 API 签名时发生错误: {str(e)}') from e
 
     def _get_request_headers(self) -> Optional[Tuple[str, str, str, str]]:
         """从 HTTP 请求头获取认证信息

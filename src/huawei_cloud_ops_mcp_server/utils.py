@@ -62,7 +62,7 @@ def strict_error_handler(func):
 async def http_request(
     method: str,
     url: str,
-    data: str = None,
+    data: Optional[str] = None,
     params: Optional[Dict] = None,
     headers: Optional[Dict] = None,
     timeout: int = 30,
@@ -73,12 +73,10 @@ async def http_request(
     Args:
         method: HTTP 方法 (GET, POST, PUT, DELETE, PATCH 等)
         url: 请求的 URL
-        data: 请求体数据(字典格式,会被序列化为 JSON)
+        data: 请求体数据
         params: URL 查询参数字典
         headers: 自定义请求头字典(可选)
         timeout: 请求超时时间(秒),默认 30
-        json_data: 直接传递的 JSON 数据
-            (如果提供,将优先使用此参数而不是 data)
 
     Returns:
         Dict[str, Any]: 包含 status_code 和 data 的字典

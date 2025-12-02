@@ -141,7 +141,7 @@ class HuaweiWorkflowTools:
                 'API操作: validate_account → '
                 'Resource URI data://api_docs/{service} → huawei_api_request'
             )
-        doc = ''.join(line.strip() for line in guidance)
+        doc = '\n'.join(guidance)
         log_msg = (f'工作流指导完成: 查询类型 - 价格={is_price}, API={is_api}')
         logger.info(log_msg)
         return doc
