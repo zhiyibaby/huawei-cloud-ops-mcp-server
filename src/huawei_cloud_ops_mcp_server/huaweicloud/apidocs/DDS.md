@@ -1,7 +1,7 @@
 DDS (文档数据库服务) API 文档:
 
 常用端点:
-1. 查询实例列表和详情:
+1. 查询文档数据库列表:
 - action: 'v3/{project_id}/instances'
 - method: GET
 - 功能: 根据指定条件查询实例列表和详情

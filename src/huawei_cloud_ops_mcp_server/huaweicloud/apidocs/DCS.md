@@ -1,7 +1,7 @@
 DCS (分布式缓存服务) API 文档:
 
 常用端点:
-1. 查询所有实例列表:
+1. 查询分布式缓存列表:
 - action: 'v2/{project_id}/instances'
 - method: GET
 - 功能: 查询租户的缓存实例列表，支持按照条件查询
