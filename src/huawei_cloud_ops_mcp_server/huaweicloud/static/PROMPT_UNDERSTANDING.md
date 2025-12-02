@@ -9,8 +9,8 @@
 | 工具名称 | 优先级 | 类别 | 说明 |
 |---------|--------|------|------|
 | `workflow_guide` | 0 | workflow | 工作流指导工具（最高优先级） |
-| `elicit_service_info` | 1 | elicit | 引导用户补全服务信息 |
-| `validate_account` | 2 | validation | 验证账号标识 |
+| `elicit_service_info` | 2 | elicit | 引导用户补全服务信息 |
+| `validate_account` | 1 | validation | 验证账号标识 |
 | `query_price` | 5 | price_query | 查询价格信息 |
 | `huawei_api_request` | 5 | api_request | 执行华为云 API 请求 |
 
@@ -35,7 +35,7 @@
 
 ### 2. `elicit_service_info` - 引导用户补全服务信息
 
-**优先级：1**  
+**优先级：2**  
 **用途：** 当用户输入不明确（没有明确指定服务类型）时，引导用户补全服务信息
 
 **参数：**
@@ -56,7 +56,7 @@
 
 ### 3. `validate_account` - 验证账号标识
 
-**优先级：2**  
+**优先级：1**  
 **用途：** 验证用户输入中是否包含有效的账号标识，或通过 Authorization 请求头认证
 
 **参数：**

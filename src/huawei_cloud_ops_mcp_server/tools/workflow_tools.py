@@ -90,13 +90,15 @@ class HuaweiWorkflowTools:
         工作流规则:
         1. 根据文档中的工具列表和调用流程提供建议
         2. 如果查询与价格相关，建议按顺序:
-           a. 先通过 Resource URI `data://price_docs/{service}` 查看价格文档
-           b. 再调用价格工具 (query_price)
+           a. 先验证服务类型 (elicit_service_info)
+           b. 先通过 Resource URI `data://price_docs/{service}` 查看价格文档
+           c. 再调用价格工具 (query_price)
         3. 如果查询与API相关,建议按顺序:
            a. 通过 Resource URI `data://prompt_understanding` 获取工具调用理解文档
            b. 先验证账号 (validate_account)
-           c. 通过 Resource URI `data://api_docs/{service}` 查看 API 文档
-           d. 最后调用API (huawei_api_request)
+           c. 在验证服务类型 (elicit_service_info)
+           d. 通过 Resource URI `data://api_docs/{service}` 查看 API 文档
+           e. 最后调用API (huawei_api_request)
         4. 如果同时涉及价格和API,先处理价格查询,再验证账号后调用API
 
         """
@@ -111,34 +113,38 @@ class HuaweiWorkflowTools:
         # 根据查询类型提供具体建议
         if is_price and is_api:
             guidance.append('价格+API查询')
-            guidance.append('1. Resource URI: data://price_docs/{service}')
-            guidance.append('2. query_price(service="服务名称", filters={})')
-            guidance.append('3. Resource URI: data://prompt_understanding')
-            guidance.append('4. validate_account(query="用户输入")')
-            guidance.append('5. Resource URI: data://api_docs/{service}')
-            guidance.append('6. huawei_api_request(service="服务名称", ...)')
+            guidance.append('1. elicit_service_info(query="用户输入")')
+            guidance.append('2. Resource URI: data://price_docs/{service}')
+            guidance.append('3. query_price(service="服务名称", filters={})')
+            guidance.append('4. Resource URI: data://prompt_understanding')
+            guidance.append('5. validate_account(query="用户输入")')
+            guidance.append('6. elicit_service_info(query="用户输入")')
+            guidance.append('7. Resource URI: data://api_docs/{service}')
+            guidance.append('8. huawei_api_request(service="服务名称", ...)')
 
         elif is_price:
             guidance.append('价格查询')
-            guidance.append('1. Resource URI: data://price_docs/{service}')
-            guidance.append('2. query_price(service="服务名称", filters={})')
+            guidance.append('1. elicit_service_info(query="用户输入")')
+            guidance.append('2. Resource URI: data://price_docs/{service}')
+            guidance.append('3. query_price(service="服务名称", filters={})')
 
         elif is_api:
             guidance.append('API查询')
             guidance.append('在使用工具前，请先读取工具调用理解文档：')
             guidance.append('Resource URI: data://prompt_understanding')
             guidance.append('1. validate_account(query="用户输入")')
-            guidance.append('2. Resource URI: data://api_docs/{service}')
-            guidance.append('3. huawei_api_request(service="服务名称", ...)')
+            guidance.append('2. elicit_service_info(query="用户输入")')
+            guidance.append('3. Resource URI: data://api_docs/{service}')
+            guidance.append('4. huawei_api_request(service="服务名称", ...)')
 
         else:
             guidance.append('无法判断类型')
             guidance.append(
-                '价格查询: Resource URI data://price_docs/{service} → '
-                'query_price'
+                '价格查询: elicit_service_info → '
+                'Resource URI data://price_docs/{service} → query_price'
             )
             guidance.append(
-                'API操作: validate_account → '
+                'API操作: validate_account → elicit_service_info → '
                 'Resource URI data://api_docs/{service} → huawei_api_request'
             )
         doc = '\n'.join(guidance)

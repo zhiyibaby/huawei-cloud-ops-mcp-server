@@ -16,13 +16,13 @@ class HuaweiCommonTools:
 
     tool_metadatas = {
         'validate_account': ToolMetadata(
-            priority=2,
+            priority=1,
             category='validation',
             timeout=5,
             retryable=False,
         ),
         'elicit_service_info': ToolMetadata(
-            priority=1,
+            priority=2,
             category='elicit',
             timeout=10,
             retryable=False,
@@ -71,8 +71,8 @@ class HuaweiCommonTools:
         """验证文本中是否包含有效的账号标识
 
         此工具用于验证用户输入中是否指定了账号。
-        如果请求头中包含 Authorization，则无需指定账号。
-        如果未指定账号且请求头中无 Authorization，将使用 elicit 询问用户选择账号。
+        如果请求头中包含 Authorization,则无需指定账号。
+        如果未指定账号且请求头中无 Authorization,将使用 elicit 询问用户选择账号。
 
         Args:
             ctx: FastMCP 上下文对象
@@ -138,7 +138,7 @@ class HuaweiCommonTools:
                     result.append('')
                     logger.info(f'账号验证通过: 用户选择账号 {account}')
                 else:
-                    result.append(f'警告: 选择的账号 "{account}" 不在支持列表中')
+                    result.append(f'选择的账号 "{account}" 不在支持列表中')
                     result.append('')
                     result.append('支持的账号:')
                     for acc in HuaweiCommonTools.SUPPORTED_ACCOUNTS:
@@ -266,7 +266,7 @@ class HuaweiCommonTools:
             # 构建服务选择提示
             service_list = ', '.join(available_services)
             prompt = (
-                f'您的查询未明确指定服务类型，请选择要{service_type_desc}的服务\n\n'
+                f'查询未明确指定服务类型，请选择要{service_type_desc}的服务\n\n'
                 f'可用服务: {service_list}\n\n'
                 f'请输入服务名称（如: ecs, vpc, rds 等）：'
             )
@@ -292,7 +292,7 @@ class HuaweiCommonTools:
                     )
 
                 if service not in valid_services:
-                    result.append(f'警告: 选择的服务 "{service}" 不在支持列表中')
+                    result.append(f'选择的服务 "{service}" 不在支持列表中')
                     result.append('')
                     result.append(f'支持的{service_type_desc}服务:')
                     for svc in available_services:

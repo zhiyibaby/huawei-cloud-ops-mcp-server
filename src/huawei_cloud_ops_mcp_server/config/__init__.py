@@ -5,7 +5,7 @@
 from typing import Any, Callable, Optional
 from huawei_cloud_ops_mcp_server.config.base import BaseConfigGroup
 from huawei_cloud_ops_mcp_server.config.mcp import MCPConfig
-from huawei_cloud_ops_mcp_server.config.log import LogConfig
+from huawei_cloud_ops_mcp_server.config.logger import LogConfig
 from huawei_cloud_ops_mcp_server.config.hw import HuaweiCloudConfig
 
 
