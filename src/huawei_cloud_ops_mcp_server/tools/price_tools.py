@@ -4,7 +4,7 @@ from typing import Dict, Optional
 
 from tinydb import TinyDB, Query
 
-from huawei_cloud_ops_mcp_server.utils import (
+from huawei_cloud_ops_mcp_server.common.utils import (
     ToolMetadata, strict_error_handler
 )
 from huawei_cloud_ops_mcp_server.huaweicloud.pricedocs import (

@@ -3,7 +3,7 @@ from typing import Optional
 
 from fastmcp import Context
 from fastmcp.server.dependencies import get_http_request
-from huawei_cloud_ops_mcp_server.utils import (
+from huawei_cloud_ops_mcp_server.common.utils import (
     ToolMetadata, strict_error_handler
 )
 from huawei_cloud_ops_mcp_server.logger import logger

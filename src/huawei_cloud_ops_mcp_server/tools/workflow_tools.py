@@ -1,4 +1,4 @@
-from huawei_cloud_ops_mcp_server.utils import (
+from huawei_cloud_ops_mcp_server.common.utils import (
     ToolMetadata, strict_error_handler
 )
 from huawei_cloud_ops_mcp_server.logger import logger

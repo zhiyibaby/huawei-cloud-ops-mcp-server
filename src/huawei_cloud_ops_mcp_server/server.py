@@ -1,8 +1,6 @@
-import inspect
 import asyncio
 import importlib
 import pkgutil
-from typing import List, Tuple, Callable
 from fastmcp import FastMCP
 
 from huawei_cloud_ops_mcp_server import tools
@@ -10,6 +8,9 @@ from huawei_cloud_ops_mcp_server.config import (
     MCP_TRANSPORT, MCP_HOST, MCP_PORT
 )
 from huawei_cloud_ops_mcp_server.logger import logger
+from huawei_cloud_ops_mcp_server.common.register import (
+    collect_tools_from_module
+)
 from huawei_cloud_ops_mcp_server.huaweicloud.static import (
     prompt_understanding_docs
 )
@@ -19,58 +20,6 @@ from huawei_cloud_ops_mcp_server.huaweicloud.apidocs import (
 from huawei_cloud_ops_mcp_server.huaweicloud.pricedocs import (
     get_price_doc, get_price_doc_names
 )
-
-
-def _collect_tools_from_class(cls) -> List[Tuple[int, Callable, str]]:
-    """
-    从类中收集工具及其优先级
-    返回: List[Tuple[priority, func, name]]
-    """
-    tools_list = []
-    class_module = getattr(cls, '__module__', None)
-    tool_metadatas = getattr(cls, 'tool_metadatas', {})
-    for attr_name in dir(cls):
-        if attr_name.startswith('_') or attr_name.endswith('_metadata'):
-            continue
-        attr = getattr(cls, attr_name)
-        # 只收集当前类本模块的方法
-        if getattr(attr, '__module__', None) != class_module:
-            continue
-        # 静态方法、类方法、普通方法
-        staticattr = inspect.getattr_static(cls, attr_name, None)
-        if isinstance(staticattr, (staticmethod, classmethod)):
-            func = attr
-        elif callable(attr) and not isinstance(attr, type):
-            func = attr
-        else:
-            continue
-        if callable(func):
-            metadata = tool_metadatas.get(attr_name)
-            priority = getattr(metadata, 'priority', 10) if metadata else 10
-            tools_list.append((priority, func, attr_name))
-    return tools_list
-
-
-def _collect_tools_from_module(module) -> List[Tuple[int, Callable, str]]:
-    """从模块中收集工具及其优先级"""
-    tools_list = []
-    module_name = module.__name__
-    for attr_name in dir(module):
-        if attr_name.startswith('_'):
-            continue
-        attr = getattr(module, attr_name)
-        if (
-            inspect.isclass(attr)
-            and getattr(attr, '__module__', None) == module_name
-        ):
-            tools_list.extend(_collect_tools_from_class(attr))
-        elif (
-            callable(attr)
-            and (inspect.isfunction(attr) or inspect.iscoroutinefunction(attr))
-            and getattr(attr, '__module__', None) == module_name
-        ):
-            tools_list.append((10, attr, attr_name))
-    return tools_list
 
 
 def load_tools(mcp: FastMCP):
@@ -86,7 +35,7 @@ def load_tools(mcp: FastMCP):
             continue
         try:
             module = importlib.import_module(name)
-            module_tools = _collect_tools_from_module(module)
+            module_tools = collect_tools_from_module(module)
             all_tools.extend(module_tools)
         except Exception as e:
             logger.warning(f'无法加载模块 {name}: {e}', exc_info=True)
