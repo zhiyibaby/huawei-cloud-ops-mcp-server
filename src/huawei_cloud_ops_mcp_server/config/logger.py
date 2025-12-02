@@ -1,13 +1,11 @@
 """
 日志模块 - 提供统一的日志配置和管理
 """
-import logging
 import sys
+import logging
 from pathlib import Path
-from logging.handlers import RotatingFileHandler
 from typing import Optional
-
-from huawei_cloud_ops_mcp_server.config import _project_root
+from logging.handlers import RotatingFileHandler
 
 
 def setup_logger(

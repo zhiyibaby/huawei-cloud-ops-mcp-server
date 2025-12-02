@@ -6,7 +6,7 @@ from fastmcp.server.dependencies import get_http_request
 from huawei_cloud_ops_mcp_server.common.utils import (
     ToolMetadata, strict_error_handler
 )
-from huawei_cloud_ops_mcp_server.logger import logger
+from huawei_cloud_ops_mcp_server.config.logger import logger
 from huawei_cloud_ops_mcp_server.huaweicloud.apidocs import SUPPORTED_SERVICES
 from huawei_cloud_ops_mcp_server.huaweicloud.pricedocs import PRICE_DOCS
 

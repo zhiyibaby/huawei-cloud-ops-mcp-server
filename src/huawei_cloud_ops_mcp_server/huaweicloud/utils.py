@@ -7,7 +7,7 @@ from fastmcp.server.dependencies import get_http_request
 from huawei_cloud_ops_mcp_server.config import Config
 from huawei_cloud_ops_mcp_server.common.utils import http_request
 from huawei_cloud_ops_mcp_server.huaweicloud.apig_sdk import signer
-from huawei_cloud_ops_mcp_server.logger import logger
+from huawei_cloud_ops_mcp_server.config.logger import logger
 
 
 class HuaweiCloudClient:

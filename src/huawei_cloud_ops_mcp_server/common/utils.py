@@ -3,7 +3,7 @@ import httpx
 from typing import Optional, Dict, Any
 from dataclasses import dataclass
 
-from huawei_cloud_ops_mcp_server.logger import logger
+from huawei_cloud_ops_mcp_server.config.logger import logger
 
 
 @dataclass

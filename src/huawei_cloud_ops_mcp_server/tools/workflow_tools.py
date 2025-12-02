@@ -1,7 +1,7 @@
 from huawei_cloud_ops_mcp_server.common.utils import (
     ToolMetadata, strict_error_handler
 )
-from huawei_cloud_ops_mcp_server.logger import logger
+from huawei_cloud_ops_mcp_server.config.logger import logger
 
 
 class HuaweiWorkflowTools:

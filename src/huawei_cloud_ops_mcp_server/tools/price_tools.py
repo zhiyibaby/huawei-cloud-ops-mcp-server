@@ -10,7 +10,7 @@ from huawei_cloud_ops_mcp_server.common.utils import (
 from huawei_cloud_ops_mcp_server.huaweicloud.pricedocs import (
     PRICE_DBS
 )
-from huawei_cloud_ops_mcp_server.logger import logger
+from huawei_cloud_ops_mcp_server.config.logger import logger
 
 
 class HuaweiPriceTools:

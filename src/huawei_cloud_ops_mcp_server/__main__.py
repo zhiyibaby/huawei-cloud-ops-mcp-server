@@ -5,7 +5,7 @@ from huawei_cloud_ops_mcp_server.server import main_async
 from huawei_cloud_ops_mcp_server.config import (
     MCP_TRANSPORT, MCP_HOST, MCP_PORT
 )
-from huawei_cloud_ops_mcp_server.logger import logger
+from huawei_cloud_ops_mcp_server.config.logger import logger
 
 
 if __name__ == "__main__":
