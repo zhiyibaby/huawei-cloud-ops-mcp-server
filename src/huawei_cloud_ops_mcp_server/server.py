@@ -13,8 +13,12 @@ from huawei_cloud_ops_mcp_server.logger import logger
 from huawei_cloud_ops_mcp_server.huaweicloud.static import (
     prompt_understanding_docs
 )
-from huawei_cloud_ops_mcp_server.huaweicloud.apidocs import API_DOCS
-from huawei_cloud_ops_mcp_server.huaweicloud.pricedocs import PRICE_DOCS
+from huawei_cloud_ops_mcp_server.huaweicloud.apidocs import (
+    get_api_doc, get_api_doc_names
+)
+from huawei_cloud_ops_mcp_server.huaweicloud.pricedocs import (
+    get_price_doc, get_price_doc_names
+)
 
 
 def _collect_tools_from_class(cls) -> List[Tuple[int, Callable, str]]:
@@ -102,8 +106,15 @@ def load_tools(mcp: FastMCP):
 
 
 def load_resources(mcp: FastMCP):
-    """加载资源到MCP服务器"""
+    """
+    加载资源到MCP服务器
 
+    优化说明：
+    1. 文档内容按需加载，不在启动时全部读取到内存
+    2. 使用缓存机制，首次读取后缓存，避免重复读取文件
+    3. 减少启动时的内存占用和 token 消耗
+    """
+    # prompt_understanding 资源（保持原有方式，因为文件较小且常用）
     @mcp.resource(uri='data://prompt_understanding')
     def prompt_understanding() -> str:
         """工具调用理解文档资源
@@ -113,44 +124,43 @@ def load_resources(mcp: FastMCP):
         """
         return prompt_understanding_docs
 
-    for service_name, doc_content in API_DOCS.items():
-        uri = f'data://api_docs/{service_name}'
-
-        def create_api_doc_handler(res_uri: str, content: str):
-            @mcp.resource(uri=res_uri)
+    # API 文档资源（延迟加载）
+    api_doc_names = get_api_doc_names()
+    for service_name in api_doc_names:
+        # 使用闭包捕获 service_name，实现延迟加载
+        def create_api_doc_handler(service: str):
+            @mcp.resource(uri=f'data://api_docs/{service}')
             def api_doc() -> str:
-                """华为云 API 文档资源
+                """华为云 API 文档资源（延迟加载）
 
                 Returns:
                     str: API 文档内容
                 """
-                return content
+                # 按需加载，首次加载后会缓存
+                return get_api_doc(service)
             return api_doc
 
-        create_api_doc_handler(uri, doc_content)
+        create_api_doc_handler(service_name)
 
-    for service_name, doc_content in PRICE_DOCS.items():
-        uri = f'data://price_docs/{service_name}'
-
-        def create_price_doc_handler(res_uri: str, content: str):
-            @mcp.resource(uri=res_uri)
+    # 价格文档资源（延迟加载）
+    price_doc_names = get_price_doc_names()
+    for service_name in price_doc_names:
+        # 使用闭包捕获 service_name，实现延迟加载
+        def create_price_doc_handler(service: str):
+            @mcp.resource(uri=f'data://price_docs/{service}')
             def price_doc() -> str:
-                """华为云价格数据结构文档资源
+                """华为云价格数据结构文档资源（延迟加载）
 
                 Returns:
                     str: 价格数据结构文档内容
                 """
-                return content
+                # 按需加载，首次加载后会缓存
+                return get_price_doc(service)
             return price_doc
 
-        create_price_doc_handler(uri, doc_content)
+        create_price_doc_handler(service_name)
 
-    logger.info(
-        f'资源加载完成: '
-        f'已注册 prompt_understanding 资源、'
-        f'{len(API_DOCS)} 个 API 文档资源和 '
-        f'{len(PRICE_DOCS)} 个价格文档资源'
-    )
+    logger.info('资源加载完成')
 
 
 def main(mcp: FastMCP, transport: str):
