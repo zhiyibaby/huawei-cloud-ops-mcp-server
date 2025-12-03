@@ -1,11 +1,67 @@
 from typing import Callable, Optional
+
 from fastmcp import Context
+
 from huawei_cloud_ops_mcp_server.config.logger import logger
-from huawei_cloud_ops_mcp_server.tools.common_tools import HuaweiCommonTools
 from huawei_cloud_ops_mcp_server.config import (
     TOOLS_REQUIRE_ACCOUNT, TOOLS_REQUIRE_SERVICE
 )
 from fastmcp.server.dependencies import get_http_request
+
+
+SUPPORTED_ACCOUNTS = ['xiaohei2018', 'krsk2021']
+SERVICE_NAME_MAP = {
+    'ecs': ['ecs', '弹性云服务器', '云服务器', '服务器'],
+    'vpc': ['vpc', '虚拟私有云', '私有云'],
+    'rds': ['rds', '关系型数据库', '数据库'],
+    'evs': ['evs', '云硬盘', '硬盘'],
+    'elb': ['elb', '负载均衡', '负载均衡器'],
+    'ims': ['ims', '镜像服务', '镜像'],
+    'ces': ['ces', '云监控', '监控'],
+    'lts': ['lts', '日志服务', '日志'],
+    'obs': ['obs', '对象存储', '存储'],
+    'eip': ['eip', '弹性公网ip', '公网ip'],
+    'dds': ['dds', '文档数据库'],
+    'css': ['css', '云搜索服务'],
+    'dcs': ['dcs', '分布式缓存服务', '缓存'],
+}
+
+
+class UserInputRequiredError(Exception):
+    pass
+
+
+def _extract_service(query: str) -> Optional[str]:
+    """从文本中提取服务标识
+
+    Args:
+        query: 输入文本
+
+    Returns:
+        Optional[str]: 找到的服务代码（如 'ecs', 'vpc'），未找到则返回 None
+    """
+    query_lower = query.lower()
+    for service_code, keywords in SERVICE_NAME_MAP.items():
+        for keyword in keywords:
+            if keyword.lower() in query_lower:
+                return service_code
+    return None
+
+
+def _extract_account(text: str) -> Optional[str]:
+    """从文本中提取账号标识
+
+    Args:
+        text: 输入文本
+
+    Returns:
+        Optional[str]: 找到的账号标识，未找到则返回 None
+    """
+    text_lower = text.lower()
+    for account in SUPPORTED_ACCOUNTS:
+        if account.lower() in text_lower:
+            return account
+    return None
 
 
 def _extract_from_args(
@@ -15,7 +71,7 @@ def _extract_from_args(
 
     Args:
         args: 工具参数字典
-        key: 要提取的键名（如 'account' 或 'service'）
+        key: 要提取的键名(如 'account' 或 'service')
         extract_func: 提取函数
 
     Returns:
@@ -107,7 +163,7 @@ async def validate_tool_params(
         if has_authorization:
             account = (
                 args.get('account')
-                or HuaweiCommonTools.SUPPORTED_ACCOUNTS[0]
+                or SUPPORTED_ACCOUNTS[0]
             )
             action = (
                 '设置占位账号'
@@ -120,7 +176,7 @@ async def validate_tool_params(
         else:
             # 尝试从 context 提取
             account = _extract_from_context(
-                ctx, 'account', HuaweiCommonTools._extract_account
+                ctx, 'account', _extract_account
             )
             if account:
                 logger.info(f'从 context 中提取到账号: {account}')
@@ -128,12 +184,12 @@ async def validate_tool_params(
             # 尝试从 args 提取
             if not account:
                 account = _extract_from_args(
-                    args, 'account', HuaweiCommonTools._extract_account
+                    args, 'account', _extract_account
                 )
 
             # 验证账号
             if not account:
-                accounts = ', '.join(HuaweiCommonTools.SUPPORTED_ACCOUNTS)
+                accounts = ', '.join(SUPPORTED_ACCOUNTS)
                 raise UserInputRequiredError(
                     f'工具 "{tool_name}" 需要账号信息。\n\n'
                     f'未检测到账号信息，请选择要使用的账号。\n\n'
@@ -141,8 +197,8 @@ async def validate_tool_params(
                     f'请在参数中指定账号，或在查询中包含账号名称。'
                 )
 
-            if account not in HuaweiCommonTools.SUPPORTED_ACCOUNTS:
-                accounts = ', '.join(HuaweiCommonTools.SUPPORTED_ACCOUNTS)
+            if account not in SUPPORTED_ACCOUNTS:
+                accounts = ', '.join(SUPPORTED_ACCOUNTS)
                 raise ValueError(
                     f'账号 "{account}" 不在支持列表中。\n\n'
                     f'可用账号: {accounts}'
@@ -154,14 +210,14 @@ async def validate_tool_params(
     # 验证服务
     if tool_name in TOOLS_REQUIRE_SERVICE:
         service = _extract_from_context(
-            ctx, 'service', HuaweiCommonTools._extract_service
+            ctx, 'service', _extract_service
         )
         if service:
             logger.info(f'从 context 中提取到服务: {service}')
 
         if not service:
             service = _extract_from_args(
-                args, 'service', HuaweiCommonTools._extract_service
+                args, 'service', _extract_service
             )
 
         if not service:
