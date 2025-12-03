@@ -42,7 +42,7 @@ def _init_pricedocs():
                 for path in pricecomp_dir.iterdir()
                 if path.is_file() and path.suffix == '.md'
             ]
-            
+
             for md_path in md_files:
                 service_name = md_path.stem.lower()
                 _price_doc_paths[service_name] = md_path

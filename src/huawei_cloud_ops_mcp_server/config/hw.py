@@ -2,9 +2,8 @@
 华为云配置模块 - 华为云相关配置
 """
 from typing import Optional
-from huawei_cloud_ops_mcp_server.config.base import (
-    BaseConfigGroup, _get_logger
-)
+from huawei_cloud_ops_mcp_server.config.base import BaseConfigGroup
+from huawei_cloud_ops_mcp_server.config.logger import logger
 
 
 class HuaweiCloudConfig(BaseConfigGroup):
@@ -45,7 +44,7 @@ class HuaweiCloudConfig(BaseConfigGroup):
         key_name = HuaweiCloudConfig._get_key_name(identifier, 'ACCESS_KEY')
         value = HuaweiCloudConfig._get_env(key_name)
         if value is None:
-            _get_logger().warning(
+            logger.warning(
                 f'{key_name} 未设置，请检查环境变量或 .env 文件'
             )
         return value
@@ -63,7 +62,7 @@ class HuaweiCloudConfig(BaseConfigGroup):
         key_name = HuaweiCloudConfig._get_key_name(identifier, 'SECRET_KEY')
         value = HuaweiCloudConfig._get_env(key_name)
         if value is None:
-            _get_logger().warning(
+            logger.warning(
                 f'{key_name} 未设置，请检查环境变量或 .env 文件'
             )
         return value

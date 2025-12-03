@@ -1,8 +1,8 @@
 """
 MCP 配置模块 - MCP 服务器相关配置
 """
-from typing import Optional
-from huawei_cloud_ops_mcp_server.config.base import BaseConfigGroup, _get_logger
+from huawei_cloud_ops_mcp_server.config.base import BaseConfigGroup
+from huawei_cloud_ops_mcp_server.config.logger import logger
 
 
 class MCPConfig(BaseConfigGroup):
@@ -13,7 +13,7 @@ class MCPConfig(BaseConfigGroup):
         """验证 MCP 传输方式"""
         transport = value.lower() if value else 'stdio'
         if transport not in ('stdio', 'http'):
-            _get_logger().warning(
+            logger.warning(
                 f'不支持的传输方式 {transport},将使用默认值 stdio'
             )
             transport = 'stdio'
@@ -43,13 +43,13 @@ class MCPConfig(BaseConfigGroup):
             try:
                 port = int(value)
                 if port < 1 or port > 65535:
-                    _get_logger().warning(
+                    logger.warning(
                         f'端口号 {port} 超出有效范围(1-65535),将使用默认值 8000'
                     )
                     return 8000
                 return port
             except ValueError:
-                _get_logger().warning(
+                logger.warning(
                     f'无效的端口号 {value},将使用默认值 8000'
                 )
                 return 8000

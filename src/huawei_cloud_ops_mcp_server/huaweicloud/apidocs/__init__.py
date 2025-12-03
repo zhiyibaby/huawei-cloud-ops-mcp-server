@@ -72,7 +72,3 @@ def get_api_doc_names() -> list:
     if _apidocs_package is None:
         _init_apidocs()
     return list(_api_doc_paths.keys())
-
-
-# 延迟初始化：不在模块导入时初始化，而是在第一次使用时初始化
-# _init_apidocs()  # 注释掉，改为在 get_api_doc_names() 中调用

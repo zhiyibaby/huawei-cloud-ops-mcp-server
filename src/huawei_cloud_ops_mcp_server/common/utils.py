@@ -1,5 +1,8 @@
 import json
 import httpx
+import functools
+import traceback
+import inspect
 from typing import Optional, Dict, Any
 from dataclasses import dataclass
 
@@ -30,11 +33,6 @@ def strict_error_handler(func):
         "errorType": str
     }
     """
-
-    import functools
-    import traceback
-    import inspect
-
     @functools.wraps(func)
     async def wrapper(*args, **kwargs):
         func_name = getattr(func, '__name__', repr(func))
@@ -85,23 +83,6 @@ async def http_request(
             'data': dict 或 {'text': str}
         }
 
-    示例:
-        # GET 请求
-        response = await http_request(
-            'GET', 'https://api.example.com/users', params={'page': 1}
-        )
-
-        # POST 请求
-        response = await http_request(
-            'POST', 'https://api.example.com/users',
-            data={'name': 'John', 'age': 30}
-        )
-
-        # 带自定义请求头
-        response = await http_request(
-            'GET', 'https://api.example.com/data',
-            headers={'Authorization': 'Bearer token'}
-        )
     """
     # 设置默认请求头
     request_headers = {

@@ -10,16 +10,6 @@ from dotenv import load_dotenv
 _project_root = Path(__file__).resolve().parent.parent.parent
 _env_file = _project_root / '.env'
 _env_loaded = load_dotenv(dotenv_path=_env_file, override=False)
-_logger = None
-
-
-def _get_logger():
-    """延迟初始化日志记录器"""
-    global _logger
-    if _logger is None:
-        from huawei_cloud_ops_mcp_server.config.logger import logger
-        _logger = logger
-    return _logger
 
 
 class BaseConfigGroup:
