@@ -10,6 +10,32 @@ from huawei_cloud_ops_mcp_server.huaweicloud.apig_sdk import signer
 from huawei_cloud_ops_mcp_server.config.logger import logger
 
 
+def get_auth_headers_from_request() -> Optional[Tuple[str, str, str, str]]:
+    """从 HTTP 请求头获取认证信息
+
+    Returns:
+        Optional[Tuple[str, str, str, str]]: (Host, X-Sdk-Date, Authorization,
+            X-Project-Id) 如果获取失败或信息不完整,返回 None
+    """
+    try:
+        request = get_http_request()
+        if not hasattr(request, 'headers'):
+            return None
+
+        request_headers = request.headers
+        host = request_headers.get('Host')
+        x_sdk_date = request_headers.get('X-Sdk-Date')
+        authorization = request_headers.get('Authorization')
+        project_id = request_headers.get('X-Project-Id')
+
+        if host and x_sdk_date and authorization:
+            return (host, x_sdk_date, authorization, project_id)
+    except Exception:
+        pass
+
+    return None
+
+
 class HuaweiCloudClient:
     """华为云统一 API 客户端"""
 
@@ -37,31 +63,6 @@ class HuaweiCloudClient:
             # 保留原始异常信息
             raise RuntimeError(f'生成华为云 API 签名时发生错误: {str(e)}') from e
 
-    def _get_request_headers(self) -> Optional[Tuple[str, str, str, str]]:
-        """从 HTTP 请求头获取认证信息
-
-        Returns:
-            Optional[Tuple[str, str, str]]:(Host, X-Sdk-Date, Authorization)
-                如果获取失败或信息不完整,返回 None
-        """
-        try:
-            request = get_http_request()
-            if not hasattr(request, 'headers'):
-                return None
-
-            request_headers = request.headers
-            host = request_headers.get('Host')
-            x_sdk_date = request_headers.get('X-Sdk-Date')
-            authorization = request_headers.get('Authorization')
-            project_id = request_headers.get('X-Project-Id')
-
-            if host and x_sdk_date and authorization:
-                return (host, x_sdk_date, authorization, project_id)
-        except Exception:
-            pass
-
-        return None
-
     def _build_endpoint_with_params(
         self, endpoint: str, params: Optional[Dict] = None
     ) -> str:
@@ -78,33 +79,50 @@ class HuaweiCloudClient:
         method: str,
         endpoint: str,
         data: Optional[Dict] = None,
-        params: Optional[Dict] = None
+        params: Optional[Dict] = None,
+        auth_headers: Optional[Tuple[str, str, str, str]] = None
     ) -> Dict[str, Any]:
-        """发送请求到华为云 API(使用华为云签名)"""
+        """发送请求到华为云 API(使用华为云签名)
+
+        Args:
+            method: HTTP 方法
+            endpoint: API 端点
+            data: 请求体数据
+            params: 查询参数
+            auth_headers: 可选的认证头信息
+                (Host, X-Sdk-Date, Authorization, X-Project-Id)
+        """
         logger.info(f'发送华为云 API 请求: {method} {endpoint}')
 
         headers = {}
+        body = json.dumps(data, separators=(',', ':')) if data else ''
 
-        # 尝试从请求头获取认证信息
-        auth_info = self._get_request_headers()
-        if auth_info:
-            host, x_sdk_date, authorization, project_id = auth_info
+        # 如果提供了认证头信息，直接使用
+        if auth_headers:
+            host, x_sdk_date, authorization, project_id = auth_headers
             headers.update({
                 'Host': host,
                 'X-Sdk-Date': x_sdk_date,
                 'Authorization': authorization
             })
-            import re
-            endpoint = re.sub(
-                r'/([a-zA-Z0-9\-_]+?)/([0-9a-f]{24,32}|[a-zA-Z0-9\-]{10,})/',
-                lambda m: f"/{m.group(1)}/{project_id}/",
-                endpoint,
-            )
+            # 如果有 X-Project-Id，替换 endpoint 中的 project_id
+            if project_id:
+                import re
+                pattern = (
+                    r'/([a-zA-Z0-9\-_]+?)/'
+                    r'([0-9a-f]{24,32}|[a-zA-Z0-9\-]{10,})/'
+                )
+                endpoint = re.sub(
+                    pattern,
+                    lambda m: f"/{m.group(1)}/{project_id}/",
+                    endpoint,
+                )
+            logger.info('使用 Authorization 请求头进行认证')
         else:
+            # 使用账号密钥进行签名
             endpoint_with_params = self._build_endpoint_with_params(
                 endpoint, params
             )
-            body = json.dumps(data, separators=(',', ':')) if data else ''
             headers = self._sign_request(
                 method, endpoint_with_params, headers, body
             )

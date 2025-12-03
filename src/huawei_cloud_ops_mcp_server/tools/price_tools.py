@@ -3,6 +3,7 @@ from pathlib import Path
 from typing import Dict, Optional
 
 from tinydb import TinyDB, Query
+from fastmcp import Context
 
 from huawei_cloud_ops_mcp_server.common.utils import (
     ToolMetadata, strict_error_handler
@@ -105,6 +106,7 @@ class HuaweiPriceTools:
     @staticmethod
     @strict_error_handler
     async def query_price(
+        ctx: Context,
         service: str = 'ecs',
         filters: Optional[Dict[str, str]] = None,
         data_filters: Optional[Dict[str, str]] = None,

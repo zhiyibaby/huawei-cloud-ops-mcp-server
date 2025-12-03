@@ -70,8 +70,13 @@ def _collect_tools_from_module(module) -> List[Tuple[int, Callable, str]]:
     return tools_list
 
 
-def load_tools(mcp: FastMCP):
-    """自动加载tools包下所有模块中的工具到MCP服务器,按优先级排序后注册"""
+def load_tools(mcp: FastMCP, apply_hooks: bool = True):
+    """自动加载tools包下所有模块中的工具到MCP服务器,按优先级排序后注册
+
+    Args:
+        mcp: FastMCP 服务器实例
+        apply_hooks: 是否应用工具执行钩子(默认为 True)
+    """
     tools_package = tools
     all_tools = []
 
@@ -91,14 +96,35 @@ def load_tools(mcp: FastMCP):
     all_tools.sort(key=lambda x: x[0])
 
     # 按优先级顺序注册工具
+    registered_count = 0
     for priority, tool_func, tool_name in all_tools:
         try:
+            # 应用钩子（如果启用）
+            if apply_hooks:
+                # 导入钩子函数（避免循环导入）
+                from huawei_cloud_ops_mcp_server.server import (
+                    tool_execution_hook,
+                    TOOLS_REQUIRE_ACCOUNT,
+                    TOOLS_REQUIRE_SERVICE
+                )
+
+                # 只对需要验证的工具应用钩子
+                if tool_name in (
+                    TOOLS_REQUIRE_ACCOUNT | TOOLS_REQUIRE_SERVICE
+                ):
+                    tool_func = tool_execution_hook(tool_func)
+                    logger.debug(f'工具 {tool_name} 已应用执行钩子')
+
             mcp.tool(tool_func)
+            registered_count += 1
         except Exception as e:
             logger.warning(f'无法注册工具 {tool_name}: {e}', exc_info=True)
             continue
 
-    logger.info(f'工具加载完成,共注册 {len(all_tools)} 个工具')
+    logger.info(
+        f'工具加载完成,共注册 {registered_count} 个工具'
+        f'{" (已应用执行钩子)" if apply_hooks else ""}'
+    )
 
 
 def load_resources(mcp: FastMCP):

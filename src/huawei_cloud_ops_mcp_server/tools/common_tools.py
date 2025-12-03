@@ -70,104 +70,104 @@ class HuaweiCommonTools:
                 return account
         return None
 
-    @staticmethod
-    @strict_error_handler
-    async def validate_account(ctx: Context, query: str) -> str:
-        """验证文本中是否包含有效的账号标识
-        如果请求头中包含 Authorization,则无需指定账号。
-        如果未指定账号且请求头中无 Authorization,将使用 elicit 询问用户选择账号。
+    # @staticmethod
+    # @strict_error_handler
+    # async def validate_account(ctx: Context, query: str) -> str:
+    #     """验证文本中是否包含有效的账号标识
+    #     如果请求头中包含 Authorization,则无需指定账号。
+    #     如果未指定账号且请求头中无 Authorization,将使用 elicit 询问用户选择账号。
 
-        Args:
-            ctx: FastMCP 上下文对象
-            query: 用户的输入文本
+    #     Args:
+    #         ctx: FastMCP 上下文对象
+    #         query: 用户的输入文本
 
-        Returns:
-            str: 验证结果信息
-                - 如果请求头包含 Authorization:返回确认信息
-                - 如果找到账号：返回确认信息
-                - 如果未找到账号且无 Authorization:通过 elicit 询问用户选择账号
+    #     Returns:
+    #         str: 验证结果信息
+    #             - 如果请求头包含 Authorization:返回确认信息
+    #             - 如果找到账号：返回确认信息
+    #             - 如果未找到账号且无 Authorization:通过 elicit 询问用户选择账号
 
-        """
-        logger.info(f'验证账号: 分析输入 "{query}"')
+    #     """
+    #     logger.info(f'验证账号: 分析输入 "{query}"')
 
-        result = []
-        result.append('账号验证结果')
-        result.append('')
+    #     result = []
+    #     result.append('账号验证结果')
+    #     result.append('')
 
-        # 首先检查请求头中是否包含 Authorization
-        has_authorization = False
-        request = get_http_request()
-        if hasattr(request, 'headers'):
-            authorization = request.headers.get('Authorization')
-            if authorization:
-                has_authorization = True
-                result.append('检测到请求头中的 Authorization 认证信息')
-                result.append('')
-                logger.info('账号验证通过: 使用请求头中的 Authorization')
+    #     # 首先检查请求头中是否包含 Authorization
+    #     has_authorization = False
+    #     request = get_http_request()
+    #     if hasattr(request, 'headers'):
+    #         authorization = request.headers.get('Authorization')
+    #         if authorization:
+    #             has_authorization = True
+    #             result.append('检测到请求头中的 Authorization 认证信息')
+    #             result.append('')
+    #             logger.info('账号验证通过: 使用请求头中的 Authorization')
 
-        # 如果没有 Authorization，尝试从输入中提取账号
-        if not has_authorization:
-            account = HuaweiCommonTools._extract_account(query)
-            if account:
-                # 找到了账号标识
-                result.append(f'检测到账号: {account}')
-                result.append('')
-                logger.info(f'账号验证通过: 检测到账号 {account}')
-            else:
-                # 没有找到账号，使用 elicit 询问用户
-                available_accounts = ", ".join(
-                    HuaweiCommonTools.SUPPORTED_ACCOUNTS
-                )
+    #     # 如果没有 Authorization，尝试从输入中提取账号
+    #     if not has_authorization:
+    #         account = HuaweiCommonTools._extract_account(query)
+    #         if account:
+    #             # 找到了账号标识
+    #             result.append(f'检测到账号: {account}')
+    #             result.append('')
+    #             logger.info(f'账号验证通过: 检测到账号 {account}')
+    #         else:
+    #             # 没有找到账号，使用 elicit 询问用户
+    #             available_accounts = ", ".join(
+    #                 HuaweiCommonTools.SUPPORTED_ACCOUNTS
+    #             )
 
-                try:
-                    elicit_result = await ctx.elicit(
-                        f'未检测到账号信息，请选择要使用的账号\n\n'
-                        f'可用账号: {available_accounts}\n\n'
-                        f'请输入账号名称：',
-                        response_type=str
-                    )
+    #             try:
+    #                 elicit_result = await ctx.elicit(
+    #                     f'未检测到账号信息，请选择要使用的账号\n\n'
+    #                     f'可用账号: {available_accounts}\n\n'
+    #                     f'请输入账号名称：',
+    #                     response_type=str
+    #                 )
 
-                    # 检查用户是否接受输入
-                    if elicit_result.action == 'accept':
-                        account = elicit_result.data
-                        logger.info(f'用户通过 elicit 选择了账号: {account}')
-                    else:
-                        result.append('用户取消了账号选择')
-                        return '\n'.join(result)
+    #                 # 检查用户是否接受输入
+    #                 if elicit_result.action == 'accept':
+    #                     account = elicit_result.data
+    #                     logger.info(f'用户通过 elicit 选择了账号: {account}')
+    #                 else:
+    #                     result.append('用户取消了账号选择')
+    #                     return '\n'.join(result)
 
-                    # 验证用户输入的账号是否有效
-                    if (account and
-                            account in HuaweiCommonTools.SUPPORTED_ACCOUNTS):
-                        result.append(f'已选择账号: {account}')
-                        logger.info(f'账号验证通过: 用户选择账号 {account}')
-                    else:
-                        result.append(f'选择的账号 "{account}" 不在支持列表中')
-                        result.append('支持的账号:')
-                        for acc in HuaweiCommonTools.SUPPORTED_ACCOUNTS:
-                            result.append(f'  - {acc}')
-                        result.append('请确认账号名称是否正确。')
-                except (McpError, Exception) as e:
-                    # 客户端不支持 elicit 功能，需要抛出异常引导用户输入
-                    # 而不是静默返回提示信息，避免客户端自动补全
-                    available_accounts = ", ".join(
-                        HuaweiCommonTools.SUPPORTED_ACCOUNTS
-                    )
-                    error_msg = (
-                        f'需要用户输入账号信息。\n\n'
-                        f'未检测到账号信息，请选择要使用的账号。\n\n'
-                        f'可用账号: {available_accounts}\n\n'
-                        f'请在查询中包含账号名称，例如: "使用 xiaohei2018 账号查询..."'
-                    )
-                    logger.warning(
-                        f'客户端不支持交互式询问 (elicit): {e},'
-                        f'抛出异常要求用户输入账号'
-                    )
-                    raise UserInputRequiredError(error_msg) from e
+    #                 # 验证用户输入的账号是否有效
+    #                 if (account and
+    #                         account in HuaweiCommonTools.SUPPORTED_ACCOUNTS):
+    #                     result.append(f'已选择账号: {account}')
+    #                     logger.info(f'账号验证通过: 用户选择账号 {account}')
+    #                 else:
+    #                     result.append(f'选择的账号 "{account}" 不在支持列表中')
+    #                     result.append('支持的账号:')
+    #                     for acc in HuaweiCommonTools.SUPPORTED_ACCOUNTS:
+    #                         result.append(f'  - {acc}')
+    #                     result.append('请确认账号名称是否正确。')
+    #             except (McpError, Exception) as e:
+    #                 # 客户端不支持 elicit 功能，需要抛出异常引导用户输入
+    #                 # 而不是静默返回提示信息，避免客户端自动补全
+    #                 available_accounts = ", ".join(
+    #                     HuaweiCommonTools.SUPPORTED_ACCOUNTS
+    #                 )
+    #                 error_msg = (
+    #                     f'需要用户输入账号信息。\n\n'
+    #                     f'未检测到账号信息，请选择要使用的账号。\n\n'
+    #                     f'可用账号: {available_accounts}\n\n'
+    #                     f'请在查询中包含账号名称，例如: "使用 xiaohei2018 账号查询..."'
+    #                 )
+    #                 logger.warning(
+    #                     f'客户端不支持交互式询问 (elicit): {e},'
+    #                     f'抛出异常要求用户输入账号'
+    #                 )
+    #                 raise UserInputRequiredError(error_msg) from e
 
-        result.append('')
-        result.append('=' * 60)
+    #     result.append('')
+    #     result.append('=' * 60)
 
-        return '\n'.join(result)
+    #     return '\n'.join(result)
 
     @staticmethod
     def _extract_service(query: str) -> Optional[str]:
@@ -228,141 +228,141 @@ class HuaweiCommonTools:
                 return True
         return False
 
-    @staticmethod
-    @strict_error_handler
-    async def elicit_service_info(ctx: Context, query: str) -> str:
-        """引导用户补全服务信息
-        当用户输入不明确（没有明确指定服务类型）时，使用此工具引导用户补全信息。
-        例如：用户输入"查询价格"或"查询实例"时，需要明确是查询哪个服务的价格或实例。
+    # @staticmethod
+    # @strict_error_handler
+    # async def elicit_service_info(ctx: Context, query: str) -> str:
+    #     """引导用户补全服务信息
+    #     当用户输入不明确（没有明确指定服务类型）时，使用此工具引导用户补全信息。
+    #     例如：用户输入"查询价格"或"查询实例"时，需要明确是查询哪个服务的价格或实例。
 
-        Args:
-            ctx: FastMCP 上下文对象
-            query: 用户的输入文本
+    #     Args:
+    #         ctx: FastMCP 上下文对象
+    #         query: 用户的输入文本
 
-        Returns:
-            str: 补全后的服务信息，格式为 JSON 字符串，包含：
-                - service: 服务代码(如 'ecs', 'vpc')
-                - query_type: 查询类型('price' 或 'api')
-                - original_query: 原始查询文本
-        """
-        logger.info(f'引导补全服务信息: 分析输入 "{query}"')
+    #     Returns:
+    #         str: 补全后的服务信息，格式为 JSON 字符串，包含：
+    #             - service: 服务代码(如 'ecs', 'vpc')
+    #             - query_type: 查询类型('price' 或 'api')
+    #             - original_query: 原始查询文本
+    #     """
+    #     logger.info(f'引导补全服务信息: 分析输入 "{query}"')
 
-        result = []
-        result.append('服务信息补全结果')
-        result.append('')
+    #     result = []
+    #     result.append('服务信息补全结果')
+    #     result.append('')
 
-        # 判断查询类型
-        is_price = HuaweiCommonTools._is_price_query(query)
-        is_api = HuaweiCommonTools._is_api_query(query)
-        query_type = 'unknown'
-        if is_price:
-            query_type = 'price'
-        elif is_api:
-            query_type = 'api'
+    #     # 判断查询类型
+    #     is_price = HuaweiCommonTools._is_price_query(query)
+    #     is_api = HuaweiCommonTools._is_api_query(query)
+    #     query_type = 'unknown'
+    #     if is_price:
+    #         query_type = 'price'
+    #     elif is_api:
+    #         query_type = 'api'
 
-        # 尝试从输入中提取服务
-        service = HuaweiCommonTools._extract_service(query)
+    #     # 尝试从输入中提取服务
+    #     service = HuaweiCommonTools._extract_service(query)
 
-        # 如果没有明确指定服务，使用 elicit 询问用户
-        if not service:
-            # 根据查询类型确定可用服务列表
-            if query_type == 'price':
-                # 价格查询支持的服务
-                available_services = sorted(PRICE_DOCS.keys())
-                service_type_desc = '价格查询'
-            elif query_type == 'api':
-                # API查询支持的服务
-                available_services = sorted(SUPPORTED_SERVICES)
-                service_type_desc = 'API查询'
-            else:
-                # 未知类型，显示所有服务
-                all_services = set(SUPPORTED_SERVICES) | set(PRICE_DOCS.keys())
-                available_services = sorted(all_services)
-                service_type_desc = '查询'
+    #     # 如果没有明确指定服务，使用 elicit 询问用户
+    #     if not service:
+    #         # 根据查询类型确定可用服务列表
+    #         if query_type == 'price':
+    #             # 价格查询支持的服务
+    #             available_services = sorted(PRICE_DOCS.keys())
+    #             service_type_desc = '价格查询'
+    #         elif query_type == 'api':
+    #             # API查询支持的服务
+    #             available_services = sorted(SUPPORTED_SERVICES)
+    #             service_type_desc = 'API查询'
+    #         else:
+    #             # 未知类型，显示所有服务
+    #             all_services = set(SUPPORTED_SERVICES) | set(PRICE_DOCS.keys())
+    #             available_services = sorted(all_services)
+    #             service_type_desc = '查询'
 
-            # 构建服务选择提示
-            service_list = ', '.join(available_services)
-            prompt = (
-                f'查询未明确指定服务类型，请选择要{service_type_desc}的服务\n\n'
-                f'可用服务: {service_list}\n\n'
-                f'请输入服务名称（如: ecs, vpc, rds 等）：'
-            )
+    #         # 构建服务选择提示
+    #         service_list = ', '.join(available_services)
+    #         prompt = (
+    #             f'查询未明确指定服务类型，请选择要{service_type_desc}的服务\n\n'
+    #             f'可用服务: {service_list}\n\n'
+    #             f'请输入服务名称（如: ecs, vpc, rds 等）：'
+    #         )
 
-            try:
-                elicit_result = await ctx.elicit(
-                    prompt,
-                    response_type=str
-                )
+    #         try:
+    #             elicit_result = await ctx.elicit(
+    #                 prompt,
+    #                 response_type=str
+    #             )
 
-                # 检查用户是否接受输入
-                if elicit_result.action == 'accept':
-                    service = elicit_result.data.strip().lower()
-                    logger.info(f'用户通过 elicit 选择了服务: {service}')
+    #             # 检查用户是否接受输入
+    #             if elicit_result.action == 'accept':
+    #                 service = elicit_result.data.strip().lower()
+    #                 logger.info(f'用户通过 elicit 选择了服务: {service}')
 
-                    # 验证服务是否有效
-                    if query_type == 'price':
-                        valid_services = set(PRICE_DOCS.keys())
-                    elif query_type == 'api':
-                        valid_services = set(SUPPORTED_SERVICES)
-                    else:
-                        valid_services = (
-                            set(SUPPORTED_SERVICES) | set(PRICE_DOCS.keys())
-                        )
+    #                 # 验证服务是否有效
+    #                 if query_type == 'price':
+    #                     valid_services = set(PRICE_DOCS.keys())
+    #                 elif query_type == 'api':
+    #                     valid_services = set(SUPPORTED_SERVICES)
+    #                 else:
+    #                     valid_services = (
+    #                         set(SUPPORTED_SERVICES) | set(PRICE_DOCS.keys())
+    #                     )
 
-                    if service not in valid_services:
-                        result.append(f'选择的服务 "{service}" 不在支持列表中')
-                        result.append('')
-                        result.append(f'支持的{service_type_desc}服务:')
-                        for svc in available_services:
-                            result.append(f'  - {svc}')
-                        result.append('')
-                        result.append('请确认服务名称是否正确。')
-                        service = None
-                else:
-                    result.append('用户取消了服务选择')
-                    result.append('')
-                    service = None
-            except (McpError, Exception) as e:
-                # 客户端不支持 elicit 功能，需要抛出异常引导用户输入
-                # 而不是静默返回提示信息，避免客户端自动补全
-                service_list = ', '.join(available_services)
-                error_msg = (
-                    f'需要用户输入服务信息。\n\n'
-                    f'查询未明确指定服务类型，请选择要{service_type_desc}的服务。\n\n'
-                    f'可用服务: {service_list}\n\n'
-                    f'请在查询中包含服务名称，例如: "查询 ECS 实例" 或 "查询 VPC 价格"'
-                )
-                logger.warning(
-                    f'客户端不支持交互式询问 (elicit): {e},'
-                    f'抛出异常要求用户输入服务'
-                )
-                raise UserInputRequiredError(error_msg) from e
+    #                 if service not in valid_services:
+    #                     result.append(f'选择的服务 "{service}" 不在支持列表中')
+    #                     result.append('')
+    #                     result.append(f'支持的{service_type_desc}服务:')
+    #                     for svc in available_services:
+    #                         result.append(f'  - {svc}')
+    #                     result.append('')
+    #                     result.append('请确认服务名称是否正确。')
+    #                     service = None
+    #             else:
+    #                 result.append('用户取消了服务选择')
+    #                 result.append('')
+    #                 service = None
+    #         except (McpError, Exception) as e:
+    #             # 客户端不支持 elicit 功能，需要抛出异常引导用户输入
+    #             # 而不是静默返回提示信息，避免客户端自动补全
+    #             service_list = ', '.join(available_services)
+    #             error_msg = (
+    #                 f'需要用户输入服务信息。\n\n'
+    #                 f'查询未明确指定服务类型，请选择要{service_type_desc}的服务。\n\n'
+    #                 f'可用服务: {service_list}\n\n'
+    #                 f'请在查询中包含服务名称，例如: "查询 ECS 实例" 或 "查询 VPC 价格"'
+    #             )
+    #             logger.warning(
+    #                 f'客户端不支持交互式询问 (elicit): {e},'
+    #                 f'抛出异常要求用户输入服务'
+    #             )
+    #             raise UserInputRequiredError(error_msg) from e
 
-        # 构建返回结果
-        if service:
-            result.append(f'已确定服务: {service.upper()}')
-            result.append(f'查询类型: {query_type}')
-            result.append(f'原始查询: {query}')
-            result.append('')
-            logger.info(
-                f'服务信息补全完成: service={service}, '
-                f'query_type={query_type}'
-            )
-        else:
-            result.append('未能确定服务信息')
-            result.append('')
+    #     # 构建返回结果
+    #     if service:
+    #         result.append(f'已确定服务: {service.upper()}')
+    #         result.append(f'查询类型: {query_type}')
+    #         result.append(f'原始查询: {query}')
+    #         result.append('')
+    #         logger.info(
+    #             f'服务信息补全完成: service={service}, '
+    #             f'query_type={query_type}'
+    #         )
+    #     else:
+    #         result.append('未能确定服务信息')
+    #         result.append('')
 
-        result.append('=' * 60)
+    #     result.append('=' * 60)
 
-        # 返回 JSON 格式的结果
-        result_dict = {
-            'service': service,
-            'query_type': query_type,
-            'original_query': query,
-            'message': '\n'.join(result)
-        }
-        return json.dumps(
-            result_dict,
-            separators=(',', ':'),
-            ensure_ascii=False
-        )
+    #     # 返回 JSON 格式的结果
+    #     result_dict = {
+    #         'service': service,
+    #         'query_type': query_type,
+    #         'original_query': query,
+    #         'message': '\n'.join(result)
+    #     }
+    #     return json.dumps(
+    #         result_dict,
+    #         separators=(',', ':'),
+    #         ensure_ascii=False
+    #     )

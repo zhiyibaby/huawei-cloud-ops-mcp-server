@@ -1,12 +1,14 @@
 import json
 from typing import Optional, Dict
 
+from fastmcp import Context
+
 from huawei_cloud_ops_mcp_server.huaweicloud.config import base_url
 from huawei_cloud_ops_mcp_server.common.utils import (
     ToolMetadata, strict_error_handler
 )
 from huawei_cloud_ops_mcp_server.huaweicloud.utils import (
-    HuaweiCloudClient
+    HuaweiCloudClient, get_auth_headers_from_request
 )
 from huawei_cloud_ops_mcp_server.config.logger import logger
 
@@ -24,6 +26,7 @@ class HuaweiApiCloudTools:
     @staticmethod
     @strict_error_handler
     async def huawei_api_request(
+        ctx: Context,
         account: str,
         service: str,
         action: str,
@@ -48,10 +51,21 @@ class HuaweiApiCloudTools:
         Returns:
             str: API 响应结果 (JSON 格式字符串)
         """
-        logger.info(
-            f'执行华为云 API 请求: service={service}, action={action}, '
-            f'method={method}, zone={zone}'
-        )
+        # 先检查是否有 Authorization 请求头
+        auth_headers = get_auth_headers_from_request()
+
+        if auth_headers:
+            logger.info(
+                f'执行华为云 API 请求(使用 Authorization): '
+                f'service={service}, action={action}, '
+                f'method={method}, zone={zone}'
+            )
+        else:
+            logger.info(
+                f'执行华为云 API 请求(使用账号 {account}): '
+                f'service={service}, action={action}, '
+                f'method={method}, zone={zone}'
+            )
 
         # 只允许GET请求
         if method.upper() != 'GET':
@@ -64,7 +78,7 @@ class HuaweiApiCloudTools:
             if not allow_post_lts_query:
                 raise ValueError(f'错误: 当前仅支持GET请求方式, 不支持 "{method}"。')
 
-        project_id, region, url = base_url(account, service, zone)
+        project_id, _, url = base_url(account, service, zone)
         client = HuaweiCloudClient(identifier=account)
 
         if '{project_id}' in action:
@@ -73,7 +87,7 @@ class HuaweiApiCloudTools:
         endpoint = f'{url}/{action.lstrip("/")}'
 
         response = await client.request(
-            method.upper(), endpoint, data, params
+            method.upper(), endpoint, data, params, auth_headers
         )
 
         logger.info(
