@@ -33,7 +33,7 @@ class HuaweiApiCloudTools:
         method: str = 'GET',
         data: Optional[Dict] = None,
         params: Optional[Dict] = None,
-        zone: str = '华北-北京一'
+        region: str = '华北-北京一'
     ) -> str:
         """执行 API 请求
 
@@ -46,7 +46,7 @@ class HuaweiApiCloudTools:
             params: 查询参数字典，用于 GET 请求的 URL 参数
                     例如: {'name': 'test', 'status': 'ACTIVE', 'limit': 50}
                     支持多个值: {'tags': ['key1=value1', 'key2=value2']}
-            zone: 区域名称，用于确定 project_id,如 '华北-北京一'
+            region: 区域名称，用于确定 project_id,如 '华北-北京一'
 
         Returns:
             str: API 响应结果 (JSON 格式字符串)
@@ -58,13 +58,13 @@ class HuaweiApiCloudTools:
             logger.info(
                 f'执行华为云 API 请求(使用 Authorization): '
                 f'service={service}, action={action}, '
-                f'method={method}, zone={zone}'
+                f'method={method}, region={region}'
             )
         else:
             logger.info(
                 f'执行华为云 API 请求(使用账号 {account}): '
                 f'service={service}, action={action}, '
-                f'method={method}, zone={zone}'
+                f'method={method}, region={region}'
             )
 
         # 只允许GET请求
@@ -78,7 +78,7 @@ class HuaweiApiCloudTools:
             if not allow_post_lts_query:
                 raise ValueError(f'错误: 当前仅支持GET请求方式, 不支持 "{method}"。')
 
-        project_id, _, url = base_url(account, service, zone)
+        project_id, _, url = base_url(account, service, region)
         client = HuaweiCloudClient(identifier=account)
 
         if '{project_id}' in action:

@@ -199,14 +199,14 @@ KRSK2021_PROJECT_ID = {
 }
 
 
-def base_url(account: str, service: str, zone: str) -> tuple[str, str, str]:
+def base_url(account: str, service: str, region: str) -> tuple[str, str, str]:
     '''
     获取华为云 API 基础 URL
 
     Args:
         account: 账号名称(如xiaohei2018,krsk2021)
         service: 服务类型(会自动转换为小写进行验证)
-        zone: 区域名称
+        region: 区域名称
 
     Returns:
         tuple[str, str, str]: (project_id, region, url)
@@ -225,16 +225,16 @@ def base_url(account: str, service: str, zone: str) -> tuple[str, str, str]:
 
     # 同时获取项目的 region 和 project_id
     match = next(
-        (v for k, v in project_dict.items() if zone in k), None
+        (v for k, v in project_dict.items() if region in k), None
     )
 
     if not match or 'project_id' not in match or 'region' not in match:
         raise ValueError(
-            'project_id 或 region 参数未能从 zone 信息中获取。请传入有效的华为云项目ID与区域。'
+            'project_id 或 region 参数未能从 region 信息中获取。请传入有效的华为云项目ID与区域。'
         )
 
-    region = match['region']
-    project_id = match['project_id']
+    get_region = match['region']
+    get_project_id = match['project_id']
 
     service_l = service.lower()
     if service_l not in SUPPORTED_SERVICES:
@@ -245,5 +245,5 @@ def base_url(account: str, service: str, zone: str) -> tuple[str, str, str]:
         )
 
     # 使用小写的服务名称构建 URL
-    url = f'https://{service_l}.{region}.myhuaweicloud.com'
-    return project_id, region, url
+    url = f'https://{service_l}.{get_region}.myhuaweicloud.com'
+    return get_project_id, get_region, url
