@@ -83,6 +83,10 @@ def __getattr__(name: str) -> Any:
         ) from exc
 
 
+TOOLS_REQUIRE_ACCOUNT = {'huawei_api_request'}
+TOOLS_REQUIRE_SERVICE = {'huawei_api_request', 'query_price'}
+
+
 # 导出所有配置类和主配置类
 __all__ = [
     'BaseConfigGroup',

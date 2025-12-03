@@ -5,18 +5,18 @@
 """
 import asyncio
 import pytest
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock
 
 from huawei_cloud_ops_mcp_server.server import (
-    _extract_account_from_args,
-    _extract_service_from_args,
+    _extract_from_args,
     _check_authorization,
     validate_tool_params,
     TOOLS_REQUIRE_ACCOUNT,
     TOOLS_REQUIRE_SERVICE
 )
 from huawei_cloud_ops_mcp_server.tools.common_tools import (
-    UserInputRequiredError
+    UserInputRequiredError,
+    HuaweiCommonTools
 )
 
 
@@ -26,7 +26,9 @@ class TestAccountExtraction:
     def test_extract_account_from_account_param(self):
         """测试从 account 参数中提取账号"""
         args = {'account': 'xiaohei2018', 'service': 'ecs'}
-        result = _extract_account_from_args('huawei_api_request', args)
+        result = _extract_from_args(
+            args, 'account', HuaweiCommonTools._extract_account
+        )
         assert result == 'xiaohei2018'
 
     def test_extract_account_from_query_param(self):
@@ -35,13 +37,17 @@ class TestAccountExtraction:
             'query': '使用 krsk2021 账号查询 ECS 实例',
             'service': 'ecs'
         }
-        result = _extract_account_from_args('huawei_api_request', args)
+        result = _extract_from_args(
+            args, 'account', HuaweiCommonTools._extract_account
+        )
         assert result == 'krsk2021'
 
     def test_no_account_found(self):
         """测试未找到账号的情况"""
         args = {'service': 'ecs', 'action': 'list'}
-        result = _extract_account_from_args('huawei_api_request', args)
+        result = _extract_from_args(
+            args, 'account', HuaweiCommonTools._extract_account
+        )
         assert result is None
 
 
@@ -51,7 +57,9 @@ class TestServiceExtraction:
     def test_extract_service_from_service_param(self):
         """测试从 service 参数中提取服务"""
         args = {'account': 'xiaohei2018', 'service': 'ecs'}
-        result = _extract_service_from_args('huawei_api_request', args)
+        result = _extract_from_args(
+            args, 'service', HuaweiCommonTools._extract_service
+        )
         assert result == 'ecs'
 
     def test_extract_service_from_query_param(self):
@@ -60,7 +68,9 @@ class TestServiceExtraction:
             'account': 'xiaohei2018',
             'query': '查询云服务器价格'
         }
-        result = _extract_service_from_args('query_price', args)
+        result = _extract_from_args(
+            args, 'service', HuaweiCommonTools._extract_service
+        )
         assert result == 'ecs'
 
     def test_extract_service_from_query_param_english(self):
@@ -69,13 +79,17 @@ class TestServiceExtraction:
             'account': 'xiaohei2018',
             'query': '查询 vpc 配置'
         }
-        result = _extract_service_from_args('huawei_api_request', args)
+        result = _extract_from_args(
+            args, 'service', HuaweiCommonTools._extract_service
+        )
         assert result == 'vpc'
 
     def test_no_service_found(self):
         """测试未找到服务的情况"""
         args = {'account': 'xiaohei2018', 'action': 'list'}
-        result = _extract_service_from_args('huawei_api_request', args)
+        result = _extract_from_args(
+            args, 'service', HuaweiCommonTools._extract_service
+        )
         assert result is None
 
 
