@@ -6,8 +6,14 @@ from pathlib import Path
 from typing import Optional, Callable, Any
 from dotenv import load_dotenv
 
-# 项目根目录和环境变量文件
-_project_root = Path(__file__).resolve().parent.parent.parent
+
+_current_file = Path(__file__).resolve()
+_project_root = _current_file.parent.parent.parent.parent
+if not (_project_root / 'pyproject.toml').exists():
+    for parent in _current_file.parents:
+        if (parent / 'pyproject.toml').exists():
+            _project_root = parent
+            break
 _env_file = _project_root / '.env'
 _env_loaded = load_dotenv(dotenv_path=_env_file, override=False)
 

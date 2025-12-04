@@ -13,5 +13,4 @@ if __name__ == "__main__":
     mcp = FastMCP(
         name='huawei-cloud-ops-mcp-server'
     )
-
     asyncio.run(main_async(mcp, MCP_TRANSPORT, host=MCP_HOST, port=MCP_PORT))

@@ -53,8 +53,8 @@ class HuaweiCloudClient:
         """生成华为云 API 签名"""
         try:
             sig = signer.Signer()
-            sig.Key = Config.get_huawei_cloud_access_key(self.identifier)
-            sig.Secret = Config.get_huawei_cloud_secret_key(self.identifier)
+            sig.Key = Config.huawei_cloud.get_access_key(self.identifier)
+            sig.Secret = Config.huawei_cloud.get_secret_key(self.identifier)
             r = signer.HttpRequest(method, endpoint, headers, body)
             sig.Sign(r)
             return r.headers
