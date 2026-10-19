@@ -16,3 +16,6 @@ logs/
 *.db
 *.json
 test.py
+
+# Bundled ECS price snapshot
+!src/huawei_cloud_ops_mcp_server/huaweicloud/pricedocs/ecs_price.json
